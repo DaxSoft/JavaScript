@@ -10,7 +10,8 @@ Installation Guide:
     Mac: '~/Applications/Adobe Photoshop CS#/Presets/Scripts/'
     Win: 'C:\Program Files\Adobe\Adobe Photoshop CS#\Presets\Scripts\'
   2. Restart your Photoshop
-  3. Choose File > Scripts > Export Photoshop Information
+  3. Choose File > Scripts >  Export Layer Information
+  4. Or just go to Choose File > Scripts > Search (Sort by .js files)
 ===============================================================================
 */
 'use strict';
