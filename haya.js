@@ -10,24 +10,14 @@
  * 
  * @plugindesc Essential core for my script to MV.
  * 
- * @param << Screen >>
+ * @param << General >>
  * @default
  *
- * @param Screen Width
- * @parent << Screen >> 
- * @type number
- * @min 0
- * @desc Adjusts the width of the screen.
- * Default: 1040
- * @default 1040
- *
- * @param Screen Height
- * @parent << Screen >> 
- * @type number
- * @min 0
- * @desc Adjusts the height of the screen.
- * Default: 780
- * @default 780
+ * @param Default_Drag
+ * @parent << General >> 
+ * @type boolean
+ * @desc default with drag on every picture, text [pixi manager]
+ * @default false
  * 
  * @help
  * ================================================================================
@@ -47,19 +37,58 @@ var Haya = Haya || {};
 Haya.Core = Haya.Core || {};
 Haya.Core.Version = 0.1;
 
-/*
-Ctrl+F locate:
+/* ================================================================================
+Ctrl+F [locate]:
     :picture
     :text
     :pixi [pixi manager]
     :scene
-*/
+================================================================================ */
 
 // $main$
 (function($){
 'use strict';
-    // extension - number
+    // =================================================================================
+    // [Parameters]:
+    // =================================================================================
+    $.parameters = {};
+    // =================================================================================
+    // [setup of mouse for: Picture | Text]
+    //   -> this.mouse.{param} = (...)
+    //   param:
+    //      -> over | out -> create as function.
+    //      -> trigger | repeat | press
+    //          -> on | off -> create as function.
+    //      -> x | y -> Number 
+    //      -> active -> Boolean (to use the mouse function)
+    //      -> drag
+    //          -> active -> Boolean (to use the drag mouse function)
+    //          -> start -> don't use this var.
+    //          -> function -> create as function.
+    // =================================================================================
+    $._setupMouse = function() {
+        return ({
+            x: 0,
+            y: 0,
+            active: true,
+            over: null,
+            out: null, 
+            trigger: {on: null, off: null},
+            press: {on: null, off: null},
+            repeat: {on: null, off: null},
+            drag: {active: true, start: false, function: null}
+        });
+    }
+    // =================================================================================
+    // [Number: extension] :number
+    // =================================================================================
     if (typeof Number.prototype.isBetween === 'undefined') {
+        // =================================================================================
+        // [isBetween]
+        //      -> min -> minimun value
+        //      -> max -> maximun value
+        //      -> equalNo -> the condition will just check the '<' or '>' if this be set as true
+        // =================================================================================
         Number.prototype.isBetween = function(min, max, equalNo) {
             var _isBetween = false; 
             if (equalNo) {
@@ -72,43 +101,49 @@ Ctrl+F locate:
             return _isBetween;
         }
     }
-    // touchInput
+    // =================================================================================
+    // [TouchInput] :touch
+    // =================================================================================
+    // [remove the limit to check out the position]
     TouchInput._onMouseMove = function(event) {
         var x = Graphics.pageToCanvasX(event.pageX);
         var y = Graphics.pageToCanvasY(event.pageY);
         this._onMove(x, y);
     };
-    // [isScene(scene_name)] :scene
+    // =================================================================================
+    // [SceneManager] :scene
+    // =================================================================================
+    // [isScene] : 
+    //      -> name : Name of Scene.
     SceneManager.prototype.isScene = function(name) {
         var scene = SceneManager._scene;
         return scene && scene.constructor === name;
     }
-    // [Pixi] :text
+    // =================================================================================
+    // [Text] :text
+    //      -> to display a text.
+    // Example:
+    //     $.pixi.add(new Text(textSting, posX, posY, function() {
+    //          [this] -> this of Text function
+    //          this.sprite.style = {fill: ['#ffffff', '#00ff99']}
+    //          this.mouse.over = function(_mouseover) { this.sprite.alpha = 0.5; }
+    //          this.mouse.out = function(_mouseout) { this.sprite.alpha = 1; }
+    //     }))
+    // =================================================================================
     function Text() {
         this.initialize.apply(this, arguments);
     }
-    // init
+    // =================================================================================
+    // create constructor | prototype
+    // =================================================================================
     Text.prototype = Object.create(Text.prototype);
     Text.prototype.constructor = Text;
-    /*
-    var style = new PIXI.TextStyle({
-    fontFamily: 'Arial',
-    fontSize: 36,
-    fontStyle: 'italic',
-    fontWeight: 'bold',
-    fill: ['#ffffff', '#00ff99'], // gradient
-    stroke: '#4a1850',
-    strokeThickness: 5,
-    dropShadow: true,
-    dropShadowColor: '#000000',
-    dropShadowBlur: 4,
-    dropShadowAngle: Math.PI / 6,
-    dropShadowDistance: 6,
-    wordWrap: true,
-    wordWrapWidth: 440
-    });
-    */
-    // initialize
+    // =================================================================================
+    // [initialize]
+    //      -> text -> [String]
+    //      -> x | y -> [Number] 
+    //      -> callBack -> [function]
+    // =================================================================================
     Text.prototype.initialize = function(text, x, y, callBack) {
         // arguments info
         this._text = text;
@@ -117,25 +152,7 @@ Ctrl+F locate:
         this._loaded = false;
         this._callBack = callBack;
         // mouse function
-        this.mouse = {};
-        this.mouse.x = 0;
-        this.mouse.y = 0;
-        this.mouse.active = true; 
-        this.mouse.over = null;
-        this.mouse.out = null;
-        this.mouse.trigger = {};
-        this.mouse.trigger.on = null;
-        this.mouse.trigger.off = null;
-        this.mouse.press = {};
-        this.mouse.press.on = null;
-        this.mouse.press.off = null;
-        this.mouse.repeat = {};
-        this.mouse.repeat.on = null;
-        this.mouse.repeat.off = null;
-        this.mouse.drag = {};
-        this.mouse.drag.active = true;
-        this.mouse.drag.start = false;
-        this.mouse.drag.function = null;
+        this.mouse = $._setupMouse();
         // load
         this.sprite = new PIXI.Text(this._text);
         SceneManager._scene.addChild(this.sprite);
@@ -148,12 +165,20 @@ Ctrl+F locate:
         // callback
         if (typeof this._callBack === 'function')  this._callBack.apply(this);
     }
-    // dispose
+    // set style
+    Text.prototype.style = function(_style) { this.sprite.style = _style; }
+    // new text
+    Text.prototype.text = function(text) { this.sprite.text = text; }
+    // =================================================================================
+    // [dispose] : destroy the object
+    // =================================================================================
     Text.prototype.dispose = function() {
         if (this.sprite.destroy)
             this.sprite.destroy();
     }
-    // update
+    // =================================================================================
+    // [update] : update function
+    // =================================================================================
     Text.prototype.update = function() {
         this.sprite.updateTransform();
         Graphics.render(this.sprite);
@@ -170,7 +195,9 @@ Ctrl+F locate:
             this.mouseSetup();
         }
     }
-    // mouse over sprite?
+    // =================================================================================
+    // [_mouseOver] : check out if the mouse is over
+    // =================================================================================
     Text.prototype._mouseOver = function() {
         if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
         if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
@@ -180,7 +207,9 @@ Ctrl+F locate:
         }
         return false; 
     }
-    // mouse Setup
+    // =================================================================================
+    // [mouseSetup] : run all functions and settings about the Mouse.
+    // =================================================================================
     Text.prototype.mouseSetup = function() {
         // check out if the mouse is over or not
         if (this._mouseOver()) {
@@ -218,14 +247,27 @@ Ctrl+F locate:
                 if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
         }
     }
-    // [Pixi] :picture
+    // =================================================================================
+    // [Picture] :picture
+    //      -> to display a image.
+    // Example:
+    //     $.pixi.add(new Picture(filename, posX, posY, function() {
+    //          [this] -> this of Picture function
+    //          this.mouse.trigger.on = function(event) { this.sprite.scale.x *= 1.25; this.sprite.scale.y *= 1.25 }
+    //     }))
+    // =================================================================================
     function Picture() {
         this.initialize.apply(this, arguments);
     }
     //
     Picture.prototype = Object.create(Picture.prototype);
     Picture.prototype.constructor = Picture;
-    // initialize
+    // =================================================================================
+    // [initialize]
+    //      -> filename -> [String]
+    //      -> x | y -> [Number] 
+    //      -> callBack -> [function]
+    // =================================================================================
     Picture.prototype.initialize = function(filename, x, y, callBack) {
         // arguments info
         this._filename = filename;
@@ -233,26 +275,8 @@ Ctrl+F locate:
         this._y = Graphics.pageToCanvasX(y);
         this._loaded = false;
         this._callBack = callBack;
-        // mouse function 
-        this.mouse = {};
-        this.mouse.x = 0;
-        this.mouse.y = 0;
-        this.mouse.active = true; 
-        this.mouse.over = null;
-        this.mouse.out = null;
-        this.mouse.trigger = {};
-        this.mouse.trigger.on = null;
-        this.mouse.trigger.off = null;
-        this.mouse.press = {};
-        this.mouse.press.on = null;
-        this.mouse.press.off = null;
-        this.mouse.repeat = {};
-        this.mouse.repeat.on = null;
-        this.mouse.repeat.off = null;
-        this.mouse.drag = {};
-        this.mouse.drag.active = true;
-        this.mouse.drag.start = false;
-        this.mouse.drag.function = null;
+        // mouse function
+        this.mouse = $._setupMouse();
         // load-on
         const loader = PIXI.loader;
         loader.add({
@@ -268,7 +292,9 @@ Ctrl+F locate:
         }.bind(this));
         loader.load();
     }
-    // setup 
+    // =================================================================================
+    // [setup] : after load, setup of picture
+    // =================================================================================
     Picture.prototype.setup = function() {
         this._loaded = true;
         this.sprite.x = this._x;
@@ -281,12 +307,16 @@ Ctrl+F locate:
         // callback
         if (typeof this._callBack === 'function')  this._callBack.apply(this);
     }
-    // dispose
+    // =================================================================================
+    // [dispose] : destroy the object
+    // =================================================================================
     Picture.prototype.dispose = function() { 
         if (this._loaded)
             this.sprite.destroy(); 
     }
-    // update
+    // =================================================================================
+    // [update] : update 
+    // =================================================================================
     Picture.prototype.update = function() {
         if (this._loaded) {
             this.sprite.updateTransform();
@@ -306,7 +336,9 @@ Ctrl+F locate:
             }
         }
     }
-    // mouse over sprite?
+    // =================================================================================
+    // [_mouseOver] : check out if the mouse is over
+    // =================================================================================
     Picture.prototype._mouseOver = function() {
         if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
         if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
@@ -316,7 +348,9 @@ Ctrl+F locate:
         }
         return false; 
     }
-    // mouse Setup
+    // =================================================================================
+    // [mouseSetup] : run all functions and settings about the Mouse.
+    // =================================================================================
     Picture.prototype.mouseSetup = function() {
         // check out if the mouse is over or not
         if (this._mouseOver()) {
@@ -354,19 +388,24 @@ Ctrl+F locate:
                 if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
         }
     }
-    // 
+    // =================================================================================
     // [PixiManager] :pixi
+    // =================================================================================
     function PixiManager() {
         this.initialize.apply(this, arguments);
     }
-    //
+    // =================================================================================
     PixiManager.prototype = Object.create(PixiManager.prototype);
     PixiManager.prototype.constructor = PixiManager;
-    // initialize
+    // =================================================================================
+    // [initialize]
+    // =================================================================================
     PixiManager.prototype.initialize = function() {
         this.data = this.data || [];
     }
-    // dispose
+    // =================================================================================
+    // [dispose] : destroy all objects that exist
+    // =================================================================================
     PixiManager.prototype.dispose = function() {
         this.data.forEach(function(current, index, array) {
             if (current.dispose) {
@@ -375,7 +414,9 @@ Ctrl+F locate:
         })
         this.data = [];
     }
-    // update
+    // =================================================================================
+    // [update] : update all objects that exist
+    // =================================================================================
     PixiManager.prototype.update = function() {
         this.data.forEach(function(item, index) {
             if (item.update) {
@@ -383,7 +424,11 @@ Ctrl+F locate:
             }
         })
     }
-    // add-on
+    // =================================================================================
+    // [add] : push a element to data.
+    //      -> pixi -> element to data.
+    //      -> index -> if null, push. If set up, setup the index of data.
+    // =================================================================================
     PixiManager.prototype.add = function(pixi, index) {
         if (pixi !== undefined) {
             if (index === undefined) {
@@ -393,7 +438,10 @@ Ctrl+F locate:
             }
         }
     }
-    // off
+    // =================================================================================
+    // [off] : remove a element from data
+    //      -> index -> index from element that will be destroyed
+    // =================================================================================
     PixiManager.prototype.off = function(index) {
         if (Number.isInteger(index)) {
             if (this.data[index]) {
@@ -402,21 +450,27 @@ Ctrl+F locate:
             }
         }
     }
-    // get a data: .data[index]
-
-    // [Scene_Base] // Yeah, i would use call() if you want to pass specific parameters. apply() is better suited to just pass everything along.
+    // =================================================================================
+    // [Scene_Base] :scene_base
+    // =================================================================================
+    // [start]
+    // =================================================================================
     $._aliasStart_SB = Scene_Base.prototype.start;
     Scene_Base.prototype.start = function() {
         $.pixi = $.pixi || new PixiManager();
         $._aliasStart_SB.call(this);
     }
-    // update
+    // =================================================================================
+    // [update]
+    // =================================================================================
     $._aliasUpdt_SB = Scene_Base.prototype.update;
     Scene_Base.prototype.update = function() {
         $._aliasUpdt_SB.call(this);
         $.pixi.update();
     }
-    // terminate
+    // =================================================================================
+    // [terminate]
+    // =================================================================================
     $._aliasTerm_SB = Scene_Base.prototype.terminate;
     Scene_Base.prototype.terminate = function() {
         $._aliasTerm_SB.call(this);
