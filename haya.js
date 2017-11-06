@@ -8,7 +8,8 @@
 /*:
  * @author: Dax Soft | Kvothe
  * 
- * @plugindesc Essential core for my script to MV.
+ * @plugindesc [Haya]
+ * Essential core for my script to MV.
  * 
  * @param << General >>
  * @default
@@ -24,6 +25,7 @@
  * This plugin is a requirement for almost all of my other RPG Maker MV plugins. 
  * You should ensure this plugin is also loaded before all other my plugins. 
  * Check out always in my website, the current version of this script.
+ * in other scripts |$.pixi| to |Haya.Core.pixi|
  * ================================================================================
  * 0.1.0 :
  *  - some functions from ruby to javascript
@@ -45,6 +47,33 @@ Ctrl+F [locate]:
     :scene
 ================================================================================ */
 
+// =================================================================================
+// [Global function]
+// =================================================================================
+function Picture() { this.initialize.apply(this, arguments); }
+function Text() { this.initialize.apply(this, arguments); }
+// =================================================================================
+// [Number: extension] :number
+// =================================================================================
+if (typeof Number.prototype.isBetween === 'undefined') {
+    // =================================================================================
+    // [isBetween]
+    //      -> min -> minimun value
+    //      -> max -> maximun value
+    //      -> equalNo -> the condition will just check the '<' or '>' if this be set as true
+    // =================================================================================
+    Number.prototype.isBetween = function(min, max, equalNo) {
+        var _isBetween = false; 
+        if (equalNo) {
+            if ( (this < max) && (this > min) )
+                _isBetween = true; 
+        } else {
+            if ( (this <= max) && (this >= min) )
+                _isBetween = true; 
+        }
+        return _isBetween;
+    }
+}
 // $main$
 (function($){
 'use strict';
@@ -52,6 +81,8 @@ Ctrl+F [locate]:
     // [Parameters]:
     // =================================================================================
     $.parameters = {};
+    $.pixi = null;
+    $.position = {};
     // =================================================================================
     // [setup of mouse for: Picture | Text]
     //   -> this.mouse.{param} = (...)
@@ -66,7 +97,7 @@ Ctrl+F [locate]:
     //          -> start -> don't use this var.
     //          -> function -> create as function.
     // =================================================================================
-    $._setupMouse = function() {
+    $.parameters._setupMouse = function() {
         return ({
             x: 0,
             y: 0,
@@ -80,26 +111,110 @@ Ctrl+F [locate]:
         });
     }
     // =================================================================================
-    // [Number: extension] :number
+    // [setup of position at screen]
+    //      -> type -> default position type
+    //      -> width -> width of object
+    //      -> height -> height of object
     // =================================================================================
-    if (typeof Number.prototype.isBetween === 'undefined') {
-        // =================================================================================
-        // [isBetween]
-        //      -> min -> minimun value
-        //      -> max -> maximun value
-        //      -> equalNo -> the condition will just check the '<' or '>' if this be set as true
-        // =================================================================================
-        Number.prototype.isBetween = function(min, max, equalNo) {
-            var _isBetween = false; 
-            if (equalNo) {
-                if ( (this < max) && (this > min) )
-                    _isBetween = true; 
-            } else {
-                if ( (this <= max) && (this >= min) )
-                    _isBetween = true; 
-            }
-            return _isBetween;
+    $.position.screen = function(type, width, height) {
+        // default point
+        this._point = new Point(0, 0);
+        // type
+        switch (type) {
+            // at center of screen
+            case "center": 
+                this._point.x = (Graphics.boxWidth - width) / 2;
+                this._point.y = (Graphics.boxHeight - height) / 2;
+                break;
+            // at left center of screen
+            case "center-left":
+                this._point.y = (Graphics.boxHeight - height) / 2;
+                break;
+            // at right center of screen
+            case "center-right":
+                this._point.x = Graphics.boxWidth - width;
+                this._point.y = (Graphics.boxHeight - height) / 2;
+                break;
+            // at top center of screen
+            case "center-top":
+                this._point.x = (Graphics.boxWidth - width) / 2;
+                break;
+            // at bottom center of screen
+            case "center-bottom":
+                this._point.x = (Graphics.boxWidth - width) / 2;
+                this._point.y = Graphics.boxHeight - height;
+                break;
+            // at upper-right of screen
+            case "upper-right":
+                this._point.x = Graphics.boxWidth - width;
+                break;
+            // at bottom-right of screen
+            case "bottom-right":
+                this._point.x = Graphics.boxWidth - width;
+                this._point.y = Graphics.boxHeight - height;
+                break;
+            // at bottom-left of screen
+            case "bottom-left":
+                this._point.y = Graphics.boxHeight - height;
+                break;
+            default: 
+                break;
         }
+        // return
+        return this._point;
+    }
+    // =================================================================================
+    // [setup of position at another object]
+    //      -> type -> default position type
+    //      -> a -> first object, that will change the position |need have x, y, width, height|
+    //      -> b -> second object, that will be the reference point |need have x, y, width, height|
+    // =================================================================================
+    $.position.object = function(type, a, b) {
+        // default point
+        this._point = new Point(a.x, a.y);
+        // type
+        switch (type) {
+            // at center of object
+            case "center":
+                this._point.x = b.x + (b.width - a.width) / 2;
+                this._point.y = b.y + (b.height - a.height) / 2;
+                break;
+            // at center left of object
+            case "center-left":
+                this._point.x = b.x;
+                this._point.y = b.y + (b.height - a.height) / 2;
+                break;
+            // at center right of object
+            case "center-right":
+                this._point.x = b.x + a.width;
+                this._point.y = b.y + (b.height - a.height) / 2;
+                break;
+            // at upper-left of object
+            case "upper-left":
+                this._point.x = b.x;
+                this._point.y = b.y - b.height;
+                break;
+            // at bottom-left of object
+            case "bottom-left":
+                this._point.x = b.x;
+                this._point.y = b.y + b.height;
+                break;
+            // at upper-right of object
+            case "upper-right":
+                this._point.x = b.x + b.width;
+                this._point.y = b.y - b.height;
+                break;
+            // at bottom-right of object
+            case "upper-right":
+                this._point.x = b.x + b.width;
+                this._point.y = b.y + b.height;
+                break;
+            // default
+            default: 
+                break;
+        }
+        // return 
+        return this._point;
     }
     // =================================================================================
     // [TouchInput] :touch
@@ -130,9 +245,6 @@ Ctrl+F [locate]:
     //          this.mouse.out = function(_mouseout) { this.sprite.alpha = 1; }
     //     }))
     // =================================================================================
-    function Text() {
-        this.initialize.apply(this, arguments);
-    }
     // =================================================================================
     // create constructor | prototype
     // =================================================================================
@@ -152,7 +264,7 @@ Ctrl+F [locate]:
         this._loaded = false;
         this._callBack = callBack;
         // mouse function
-        this.mouse = $._setupMouse();
+        this.mouse = $.parameters._setupMouse();
         // load
         this.sprite = new PIXI.Text(this._text);
         SceneManager._scene.addChild(this.sprite);
@@ -194,6 +306,14 @@ Ctrl+F [locate]:
         if (this.mouse.active) {
             this.mouseSetup();
         }
+    }
+    // =================================================================================
+    // [position] : library of position to class
+    // =================================================================================
+    Text.prototype.position = function(type) {
+        var _position = $.position.screen(type, this.sprite.width, this.sprite.height);
+        this.sprite.x = _position.x;
+        this.sprite.y = _position.y;
     }
     // =================================================================================
     // [_mouseOver] : check out if the mouse is over
@@ -256,9 +376,7 @@ Ctrl+F [locate]:
     //          this.mouse.trigger.on = function(event) { this.sprite.scale.x *= 1.25; this.sprite.scale.y *= 1.25 }
     //     }))
     // =================================================================================
-    function Picture() {
-        this.initialize.apply(this, arguments);
-    }
+    
     //
     Picture.prototype = Object.create(Picture.prototype);
     Picture.prototype.constructor = Picture;
@@ -276,9 +394,9 @@ Ctrl+F [locate]:
         this._loaded = false;
         this._callBack = callBack;
         // mouse function
-        this.mouse = $._setupMouse();
+        this.mouse = $.parameters._setupMouse();
         // load-on
-        const loader = PIXI.loader;
+        const loader = new PIXI.loaders.Loader();
         loader.add({
             name: 'picture',
             url: this._filename,
@@ -335,6 +453,14 @@ Ctrl+F [locate]:
                 this.mouseSetup();
             }
         }
+    }
+    // =================================================================================
+    // [position] : library of position to class
+    // =================================================================================
+    Picture.prototype.position = function(type) {
+        var _position = $.position.screen(type, this.sprite.width, this.sprite.height);
+        this.sprite.x = _position.x;
+        this.sprite.y = _position.y;
     }
     // =================================================================================
     // [_mouseOver] : check out if the mouse is over
@@ -402,6 +528,7 @@ Ctrl+F [locate]:
     // =================================================================================
     PixiManager.prototype.initialize = function() {
         this.data = this.data || [];
+        this.cache = this.cache || [];
     }
     // =================================================================================
     // [dispose] : destroy all objects that exist
@@ -431,11 +558,8 @@ Ctrl+F [locate]:
     // =================================================================================
     PixiManager.prototype.add = function(pixi, index) {
         if (pixi !== undefined) {
-            if (index === undefined) {
-                this.data.push(pixi);
-            } else {
-                this.data[index] = pixi;
-            }
+            index = index === undefined ? this.data.lenght + 1 : index; 
+            this.data[index] = pixi; 
         }
     }
     // =================================================================================
@@ -450,6 +574,12 @@ Ctrl+F [locate]:
             }
         }
     }
+    // check out if the last added was loaded
+    PixiManager.prototype.lastLoaded = function() {
+        if (this.data.pop() === undefined) return false;
+        if (this.data.pop()._loaded) return true;
+    }
+    $.pixi = $.pixi || new PixiManager();
     // =================================================================================
     // [Scene_Base] :scene_base
     // =================================================================================
@@ -457,7 +587,6 @@ Ctrl+F [locate]:
     // =================================================================================
     $._aliasStart_SB = Scene_Base.prototype.start;
     Scene_Base.prototype.start = function() {
-        $.pixi = $.pixi || new PixiManager();
         $._aliasStart_SB.call(this);
     }
     // =================================================================================
@@ -475,25 +604,6 @@ Ctrl+F [locate]:
     Scene_Base.prototype.terminate = function() {
         $._aliasTerm_SB.call(this);
         $.pixi.dispose();
-    }
-    
-    // Teste
-    $._aliasCreate_ST = Scene_Title.prototype.create;
-    Scene_Title.prototype.create = function() {
-        $._aliasCreate_ST.call(this);
-        $.pixi.add(new Picture("img/sv_enemies/Actor1_3.png", 0, 0, function(event) {
-            this.mouse.over = function(_mouseover) { this.sprite.alpha = 0.5; }
-            this.mouse.out = function(_mouseout) { this.sprite.alpha = 1; }
-        }));
-
-        $.pixi.add(new Text("testando", 500, 50, function(event) {
-            this.sprite.style = {
-                stroke: '#4a1850',
-                fill: ['#ffffff', '#00ff99'], // gradient
-            }
-            this.mouse.over = function(_mouseover) { this.sprite.alpha = 0.5; }
-            this.mouse.out = function(_mouseout) { this.sprite.alpha = 1; }
-        }))
     }
 })(Haya.Core);
 Imported.Haya = true;
