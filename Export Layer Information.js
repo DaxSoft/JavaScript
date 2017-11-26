@@ -124,7 +124,7 @@ Imported.Haya.exportLayerInformation = {};
         // out
         string += "}";
         // [file]
-        var file = new File(root + "file.json");
+        var file = new File(root + "photoshop_file.json");
         file.remove();
         file.open("a");
         file.lineFeed = fileLineFeed;
