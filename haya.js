@@ -32,6 +32,8 @@ Ctrl+F [locate]:
     :picture
     :text
     :movie
+    :GUI
+        :button
     :touch
     :scene_manager
     :scene_base
@@ -46,6 +48,7 @@ function print(content) { console.log(content) };
 function Picture() { this.initialize.apply(this, arguments) };
 function Text() { this.initialize.apply(this, arguments) };
 function Movie() { this.initialize.apply(this, arguments) };
+function Button() { this.initialize.apply(this, arguments) };
 // =================================================================================
 // [Number: extension] :number
 // =================================================================================
@@ -106,6 +109,12 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         return _indexObject;
     }
     // =============================================================================
+    // [folder] : get local folder name
+    // =============================================================================
+    $.General.Get.folder = function() {
+        return window.location.pathname.replace(/[^\\\/]*$/, '');
+    }
+    // =============================================================================
     // [anyKeyboard] :key
     // check out if press any key of keyboard 
     // =============================================================================
@@ -157,7 +166,7 @@ if (typeof Number.prototype.isBetween === 'undefined') {
             trigger: {on: null, off: null},
             press: {on: null, off: null},
             repeat: {on: null, off: null},
-            drag: {active: true, start: false, function: null}
+            drag: {active: false, start: false, function: null}
         });
     }
     // =============================================================================
@@ -518,11 +527,11 @@ if (typeof Number.prototype.isBetween === 'undefined') {
             //this.sprite.hitArea.height = this.sprite.height + ( (this.sprite.height * this.sprite.scale.y) / 2);
             this.sprite.hitArea.x = this.sprite.x;
             this.sprite.hitArea.y = this.sprite.y;
-            // get the mouse position
-            this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
-            this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
             // check out if the mouse will be used on
             if (this.mouse.active) {
+                // get the mouse position
+                this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
+                this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
                 this.mouseSetup();
             }
             // afterUpdate
@@ -802,6 +811,158 @@ if (typeof Number.prototype.isBetween === 'undefined') {
             if (typeof this._afterUpdate === 'function')  this._afterUpdate.apply(this, arguments);
         }
     }
+    // =============================================================================
+    // [GUI] :gui
+    // =============================================================================
+
+    // =============================================================================
+    // [Button] :button
+    // =============================================================================
+    Button.prototype = Object.create(Button.prototype);
+    Button.prototype.constructor = Button;
+    // =============================================================================
+    // [init]
+    // =============================================================================
+    Button.prototype.initialize = function(hash, callback, idcont) {
+        // hash
+        this.setup = {}
+        this.setup.width = hash.width === undefined ? 64 : hash.width;
+        this.setup.height = hash.height === undefined ? 24 : hash.height;
+        this.setup.text = hash.text === undefined ? "Button" : hash.text;
+        this.setup.radius = hash.radius === undefined ? 1 : hash.radius;
+        this.setup.color = hash.color === undefined ?  "0x131d22" : hash.color;
+        this.setup.x = hash.x === undefined ? 0 : hash.x;
+        this.setup.y  = hash.y === undefined ? 0 : hash.y;
+        this.setup.align  = hash.align === undefined ? "center" : hash.align;
+        // setup
+        this._x = this.setup.x;
+        this._y = this.setup.y;
+        this._callBack = callback;
+        this._afterUpdate = null;
+        this._preUpdate = null;
+        this.mouse = $.General.Mouse.setup();
+        this.mouse.active = true;
+        // sprite
+        this.sprite = new PIXI.Graphics();
+        this.sprite.beginFill(this.setup.color)
+        this.sprite.drawRoundedRect(0, 0, this.setup.width, this.setup.height, this.setup.radius);
+        this.sprite.endFill();
+        this.sprite.x = this._x; this.sprite.y = this._y;
+        this.sprite.hitArea = new PIXI.Rectangle(this.sprite.x, this.sprite.y, this.sprite.width, this.sprite.height);
+        // text
+        this.text = new PIXI.Text(this.setup.text);
+        this.text.style.fill = "white";
+        this.text.style.fontSize = 14;
+        this.text.align = "center";
+        // Align
+        this.align();
+        // addChild
+        $.Pixi.data.container(idcont === undefined ? 'button' : idcont).addChild(this.sprite);
+        $.Pixi.data.container(idcont === undefined ? 'button' : idcont).addChild(this.text);
+        // callback
+        if (typeof this._callBack === 'function')  this._callBack.apply(this, arguments);
+    }
+    // ============================================================================= 
+    // [changeColor]
+    // ============================================================================= 
+    Button.prototype.changeColor = function(color) {
+        color = color === undefined ? this.setup.color : color;
+        this.sprite.clear();
+        this.sprite.beginFill(color);
+        this.sprite.drawRoundedRect(0, 0, this.setup.width, this.setup.height, this.setup.radius);
+        this.sprite.endFill();
+    }
+    // ============================================================================= 
+    // [align]
+    // ============================================================================= 
+    Button.prototype.align = function() {
+        this.align = $.DMath.Position.object({type: this.setup.align, a: this.text, b: this.sprite});
+        this.text.x = this.align.x;
+        this.text.y = this.align.y;
+    }
+    // ============================================================================= 
+    // [dispose]
+    // ============================================================================= 
+    Button.prototype.dispose = function() {
+        this.sprite.destroy(true); 
+        this.text.destroy(true);
+    }
+    // ============================================================================= 
+    // [update]
+    // ============================================================================= 
+    Button.prototype.update = function() {
+        // preUpdate
+        if (typeof this._preUpdate === 'function')  this._preUpdate.apply(this, arguments);
+        this.sprite.hitArea.x = this.sprite.x;
+        this.sprite.hitArea.y = this.sprite.y;
+        this.sprite.hitArea.width = this.sprite.width;
+        this.sprite.hitArea.height = this.sprite.height;
+        // check out if the mouse will be used on
+        if (this.mouse.active) {
+            // get the mouse position
+            this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
+            this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
+            this.mouseSetup();
+        }
+        // if the pos change
+        if (this.sprite.x !== this._x || this.sprite.y !== this._y) {
+            this.align();
+        }
+        // afterUpdate
+        if (typeof this._afterUpdate === 'function')  this._afterUpdate.apply(this, arguments);
+    }
+    // =============================================================================
+    // [_mouseOver] : check out if the mouse is over
+    // =============================================================================
+    Button.prototype._mouseOver = function() {
+        if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
+        if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
+            if (this.mouse.y.isBetween(this.sprite.hitArea.y, this.sprite.hitArea.y + this.sprite.hitArea.height)) {
+                return true;
+            }
+        }
+        return false; 
+    }
+    // =============================================================================
+    // [mouseSetup] : run all functions and settings about the Mouse.
+    // =============================================================================
+    Button.prototype.mouseSetup = function() {
+        // check out if the mouse is over or not
+        if (this._mouseOver()) {
+            // function that will be call
+            if (typeof this.mouse.over === 'function') this.mouse.over.apply(this);
+            // check out if was triggered inside
+            if (TouchInput.isTriggered()) 
+                if (typeof this.mouse.trigger.on === 'function') this.mouse.trigger.on.apply(this);
+            // check out if was pressed inside
+            if (TouchInput.isLongPressed()) {
+                if (!this.mouse.drag.active) {
+                    if (typeof this.mouse.press.on === 'function') this.mouse.press.on.apply(this);
+                } else {
+                    if (typeof this.mouse.drag.function === 'function') this.mouse.drag.function.apply(this);
+                    this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
+                    this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
+                }
+            } else {
+               if (this.mouse.drag.active)  this.mouse.drag.start = false;
+            }
+            // check out if was repeated inside
+            if (TouchInput.isRepeated())
+                if (typeof this.mouse.repeat.on === 'function') this.mouse.repeat.on.apply(this);
+        } else {
+            // function that will be call
+            if (typeof this.mouse.out === 'function') this.mouse.out.apply(this);
+            // check out if was triggered inside
+            if (TouchInput.isTriggered()) 
+                if (typeof this.mouse.trigger.off === 'function') this.mouse.trigger.off.apply(this);
+            // check out if was pressed inside
+            if (TouchInput.isLongPressed())
+                if (typeof this.mouse.press.off === 'function') this.mouse.press.off.apply(this);
+            // check out if was repeated inside
+            if (TouchInput.isRepeated())
+                if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
+        }
+    }
     // ============================================================================= 
     // [TouchInput] :touch
     // =============================================================================
@@ -866,8 +1027,21 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     $.movie = function(hash, callback) {
         $.Pixi.data.add(new Movie(hash.filename, callback, hash.id), hash.index)
     }
+    // add on button
+    $.button = function(hash, callback) {
+        $.Pixi.data.add(new Button(hash, callback, hash.id), hash.index);
+    }
     // get data from haya.pixi.data
     $.pdata = function(index) { return $.Pixi.data.data[index]; }
     // get if data is loaded
     $.Pixi.loaded = function(index) { return $.Pixi.data.data[index]._loaded; }
+    // loadJson
+    $.json = function(filename, callback) {
+        let loader = new PIXI.loaders.Loader ();
+        loader 
+            .add('json', filename)
+            .load(function(ld, rs) {
+                callback(rs['json'].data);
+            });
+    }
 })(Haya);
