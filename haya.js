@@ -82,6 +82,8 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     $.General = {Get: {}, Mouse: {}, Key: {}};
     $.DMath = {Position: {}, Value: {repeat: {}, smooth: {}}};
     $.Pixi = {_requestedTextures: {}, data: {}, textureCache: {}};
+    $.fs = require('fs');
+    $.path = require('path');
     // =============================================================================
     // [General] :general
     // =============================================================================
@@ -112,7 +114,27 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     // [folder] : get local folder name
     // =============================================================================
     $.General.Get.folder = function() {
-        return window.location.pathname.replace(/[^\\\/]*$/, '');
+        let path = window.location.pathname.replace(/[^\\\/]*$/, '');
+        return path;
+    }
+    // =============================================================================
+    // get a list of files from a dir
+    // =============================================================================
+    $.General.Get.fileList = function(dir, type) {
+        let _fileList = [];
+        $.fs.readdir(dir, function(err, files) {
+            files.forEach(function(value, index) {
+                if (type === undefined) {
+                    _fileList.push(value);
+                } else {
+                    if (value.split('.').pop() === type) {
+                        _fileList.push(value);
+                    }
+                }
+                
+            })
+        })
+        return _fileList;
     }
     // =============================================================================
     // [anyKeyboard] :key
