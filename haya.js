@@ -1,3 +1,4 @@
+
 // ================================================================================
 // Plug-in    : Haya Core
 // Author     : Dax Soft | Kvothe
@@ -27,6 +28,8 @@ Ctrl+F [locate]:
     :dmath
         :position
         :move
+    :net
+        :download
     :pixi
         :pmanager
     :picture
@@ -70,7 +73,7 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         }
         return _isBetween;
     }
-}
+};
 // =================================================================================
 // [Main] :main
 // =================================================================================
@@ -82,8 +85,11 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     $.General = {Get: {}, Mouse: {}, Key: {}};
     $.DMath = {Position: {}, Value: {repeat: {}, smooth: {}}};
     $.Pixi = {_requestedTextures: {}, data: {}, textureCache: {}};
+    $.Net = {Download: {}};
     $.fs = require('fs');
     $.path = require('path');
+    $.url = require('url');
+    $.http = require('http');
     // =============================================================================
     // [General] :general
     // =============================================================================
@@ -338,6 +344,26 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         // return
         return point;
     }
+    // =============================================================================
+    // [Net] :net
+    // =============================================================================
+
+    // =============================================================================
+    // [Download-Url] :download
+    // download a file from url and show option to save
+    // =============================================================================
+    $.Net.Download.Url = function(filename, url) {
+        // element
+        let link = document.createElement("a");
+        link.download = filename;
+        link.target = "_blank";
+        // url
+        link.url = url;
+        document.body.appendChild(link);
+        link.click();
+        // clean up
+        document.body.removeChild(link);
+    };
     // =============================================================================
     // [pixi] :pixi
     // =============================================================================
