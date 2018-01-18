@@ -1,9 +1,10 @@
 
+
 // ================================================================================
 // Plug-in    : Haya Core
 // Author     : Dax Soft | Kvothe
 // Website    : www.dax-soft.weebly.com
-// Version    : 0.1.0
+// Version    : 0.1.6
 // Special thanks for Fehu (Alisson)
 // ================================================================================
 
@@ -25,9 +26,11 @@ Ctrl+F [locate]:
         :get
         :key
         :mouse
+        :dialog
     :dmath
         :position
         :move
+        :calc
     :net
         :download
     :pixi
@@ -37,6 +40,7 @@ Ctrl+F [locate]:
     :movie
     :GUI
         :button
+        :list
     :touch
     :scene_manager
     :scene_base
@@ -44,6 +48,7 @@ Ctrl+F [locate]:
     :tool | :end
 ================================================================================ */
 Haya = {};
+// pixi.baseTexture.hasLoaded
 // =================================================================================
 // [Global function] :global
 // =================================================================================
@@ -52,6 +57,7 @@ function Picture() { this.initialize.apply(this, arguments) };
 function Text() { this.initialize.apply(this, arguments) };
 function Movie() { this.initialize.apply(this, arguments) };
 function Button() { this.initialize.apply(this, arguments) };
+function List() { this.initialize.apply(this, arguments) };
 // =================================================================================
 // [Number: extension] :number
 // =================================================================================
@@ -82,8 +88,8 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     // =============================================================================
     // [Global variable]: $ -> Haya
     // =============================================================================
-    $.General = {Get: {}, Mouse: {}, Key: {}};
-    $.DMath = {Position: {}, Value: {repeat: {}, smooth: {}}};
+    $.General = {Get: {}, Mouse: {}, Key: {}, Dialog: {file: {}}};
+    $.DMath = {Position: {}, Calc: {}, Value: {repeat: {}, smooth: {}}};
     $.Pixi = {_requestedTextures: {}, data: {}, textureCache: {}};
     $.Net = {Download: {}};
     $.fs = require('fs');
@@ -126,21 +132,35 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     // =============================================================================
     // get a list of files from a dir
     // =============================================================================
-    $.General.Get.fileList = function(dir, type) {
-        let _fileList = [];
-        $.fs.readdir(dir, function(err, files) {
-            files.forEach(function(value, index) {
-                if (type === undefined) {
-                    _fileList.push(value);
-                } else {
-                    if (value.split('.').pop() === type) {
-                        _fileList.push(value);
-                    }
-                }
-                
-            })
+    $.General.Get.fileList = function(path, filter, callback) {
+        // check out if the folder exist
+        if (!$.fs.existsSync(path)) {
+            console.log("dir don't foud", path);
+            return;
+        }
+        // get
+        var files = $.fs.readdirSync(path);
+        // each
+        for (let i = 0; i < files.length; i++) {
+            let filename = $.path.join(path, files[i]);
+            let stat = $.fs.lstatSync(filename);
+            if (stat.isDirectory()) {
+                // recursive
+                $.General.Get.fileList(filename, filter, callback);
+            } else if (filter.test(filename)) { callback(filename) };
+        };
+    }
+    // =============================================================================
+    // [get-files]
+    // =============================================================================
+    $.General.Get.Files = function() {
+        let index = 0;
+        root = $.path.join(".", $.path.dirname(window.location.pathname));
+        let files = $.fs.readdirSync(window.dirname);
+        return files.filter(function(i) {
+            let reg = /^[^\.]+$/
+            return !reg.test(i);
         })
-        return _fileList;
     }
     // =============================================================================
     // [anyKeyboard] :key
@@ -165,10 +185,16 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         return _anyGamepad;
     }
     // =============================================================================
-    // [any]
+    // [any] : any key pressed
     // =============================================================================
     $.General.Key.any = function() {
         return ($.General.Key.anyKeyboard() || $.General.Key.anyGamepad() || TouchInput.isTriggered());
+    }
+    // =============================================================================
+    // keyCode
+    // =============================================================================
+    $.General.Key.char = function(keyCode) {
+        return String.fromCharCode(keyCode);
     }
     // =============================================================================
     // [setup] :mouse
@@ -196,6 +222,33 @@ if (typeof Number.prototype.isBetween === 'undefined') {
             repeat: {on: null, off: null},
             drag: {active: false, start: false, function: null}
         });
+    }
+    // =============================================================================
+    // [dialog] :dialog
+    // =============================================================================
+
+    // =============================================================================
+    // [dialog-file] : get a filename from a folder (choose)
+    // =============================================================================
+    $.General.Dialog.file.open = function(callback) {
+        let input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.addEventListener("change", function(event) {
+            callback(this.value);
+        }, false);
+        input.click();
+    }
+    // =============================================================================
+    // [dialog-file-filter] : get a file with filter
+    // =============================================================================
+    $.General.Dialog.file.filter = function(filter, callBack) {
+        let input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.setAttribute("accept", filter || "");
+        input.addEventListener("change", function(event) {
+            callback(this.value);
+        }, false);
+        input.click();
     }
     // =============================================================================
     // [DMath] :dmath
@@ -344,6 +397,30 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         // return
         return point;
     }
+    // =============================================================================
+    // [Calc] :calc
+    // =============================================================================
+    $.DMath.Calc.Item = {};
+    // =============================================================================
+    // [calc-item-increase] > increase using reference something.;
+    // =============================================================================
+    $.DMath.Calc.Item.Use = function(hash) {
+        // get
+        let attr = hash.attr; // valor do atributo. O quanto aumenta, etc.
+        let spirit = hash.spirit || 1.0; // se o personagem tá com espírito alto. Percentagem.
+        let type = hash.type || 0.2; // raridade do item (0.1-1.0). Percentagem.
+        let delta = hash.delta || 0.1; // taxa de evasão do item. Percentagem.
+        let skill = hash.body || 0.1; // o quão o corpo do personagem irá se nutrir do item. Percentagem.
+        let value;
+        // calc
+        attr = $.DMath.randomic(attr, (attr*type));
+        value = (attr * skill);
+        value = $.DMath.randomic(value, (delta*value) * spirit);
+        // return
+        return value;
+    }
+
+
     // =============================================================================
     // [Net] :net
     // =============================================================================
@@ -1011,6 +1088,24 @@ if (typeof Number.prototype.isBetween === 'undefined') {
                 if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
         }
     }
+    // =============================================================================
+    // [List] :list
+    // =============================================================================
+    List.prototype = Object.create(List.prototype);
+    List.prototype.constructor = List;
+    // =============================================================================
+    // [init]
+    //      elements -> array [objects with 'sprite'] 
+    //      callback -> callback
+    /*
+        new List([new Haya.img({filename: "img.png", index: 'x'})], function() {
+            
+        })
+    */
+    // =============================================================================
+    List.prototype.initialize = function(elements) {
+
+    }
     // ============================================================================= 
     // [TouchInput] :touch
     // =============================================================================
@@ -1085,11 +1180,20 @@ if (typeof Number.prototype.isBetween === 'undefined') {
     $.Pixi.loaded = function(index) { return $.Pixi.data.data[index]._loaded; }
     // loadJson
     $.json = function(filename, callback) {
-        let loader = new PIXI.loaders.Loader ();
+        let loader = new PIXI.loaders.Loader();
         loader 
             .add('json', filename)
             .load(function(ld, rs) {
                 callback(rs['json'].data);
+            });
+    }
+    // loader Pixi function
+    $.load = function(filename, callback) {
+        let loader = new PIXI.loaders.Loader();
+        loader 
+            .add('load', filename)
+            .load(function(rload, resource) {
+                callback(resource['load']);
             });
     }
 })(Haya);
