@@ -1,17 +1,16 @@
 
-
 // ================================================================================
 // Plug-in    : Haya Core
 // Author     : Dax Soft | Kvothe
 // Website    : www.dax-soft.weebly.com
-// Version    : 0.1.6
+// Version    : 0.2.1
 // Special thanks for Fehu (Alisson)
 // ================================================================================
 
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc Essential core for my script to MV.
+ * @plugindesc [0.2.1] Essential core for my script to MV.
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
@@ -21,50 +20,38 @@
 Ctrl+F [locate]:
     :global
     :number
-    :main
-    :general
-        :get
-        :key
-        :mouse
-        :dialog
+    :string
+    :fileio
+    :utils
     :dmath
-        :position
-        :move
-        :calc
-    :net
-        :download
-    :pixi
-        :pmanager
-    :picture
-    :text
-    :movie
     :touch
-    :scene_manager
-    :scene_base
-    :scene
-    :tool | :end
+    :sceneManager
+    :piximanager
+    :sprite
+    :gui
+        :button
+    :tool
 ================================================================================ */
-Haya = new Object();
-// pixi.baseTexture.hasLoaded
+var Imported = Imported || new Object();
+var Haya = new Object();
 // =================================================================================
 // [Global function] :global
 // =================================================================================
 function print(content) { console.log(content) };
-function Picture() { this.initialize.apply(this, arguments) };
-function Text() { this.initialize.apply(this, arguments) };
-function Movie() { this.initialize.apply(this, arguments) };
-function Button() { this.initialize.apply(this, arguments) };
-function List() { this.initialize.apply(this, arguments) };
 // =================================================================================
 // [Number: extension] :number
 // =================================================================================
+// isBetween
 if (typeof Number.prototype.isBetween === 'undefined') {
-    // =============================================================================
-    // [isBetween]
-    //      -> min -> minimun value
-    //      -> max -> maximun value
-    //      -> equalNo -> the condition will just check the '<' or '>' if this be set as true
-    // =============================================================================
+    /**
+     * @desc Check out if the value is between 'min' and 'max'
+     * @param {number} min minumum value 
+     * @param {number} max maximum value
+     * @param {boolean} equalNo default is false
+     *  [true] will check based on '<' and '>'
+     *  [false] will check based on '<=' and '>='
+     * @return {boolean}
+     */
     Number.prototype.isBetween = function(min, max, equalNo) {
         var _isBetween = false; 
         if (equalNo) {
@@ -77,251 +64,300 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         return _isBetween;
     }
 };
+// isOdd
+if (typeof Number.prototype.isOdd === 'undefined') {
+    /**
+     * @desc check out if the current value is odd
+     * @return {boolean}
+     */
+    Number.prototype.isOdd = function() {
+        return (this & 1);
+    }
+}
+// isEven
+if (typeof Number.prototype.isEven === 'undefined') {
+    /**
+     * @desc check out if the current value is evan
+     * @return {boolean}
+     */
+    Number.prototype.isEven = function() {
+        return !(this & 1);
+    }
+}
+// =================================================================================
+// [String: extension] :string
+// =================================================================================
+// isEmpty
+if (typeof String.prototype.isEmpty === 'undefined') {
+    /**
+     * @desc check out if an string is empty
+     * @return {boolean}
+    */
+    String.prototype.isEmpty = function() {
+        return (this.length === 0 || !this.trim());
+    };
+};
+// clean
+if (typeof String.prototype.clean === 'undefined') {
+    /**
+     * @desc clean the string of break lines elements and empty spaces
+     * @return {string}
+    */
+    String.prototype.clean = function() {
+        return this.replace(/(\r\n|\n|\r)/gm, "").replace(/^\s+|\s+$/g, "");
+    }
+};
 // =================================================================================
 // [Main] :main
 // =================================================================================
 (function($) {
-    'use strict';
+'use strict';
     // =============================================================================
     // [Global variable]: $ -> Haya
     // =============================================================================
-    $.General = {Get: {}, Mouse: {}, Key: {}, Dialog: {file: {}}};
-    $.DMath = {Position: {}, Calc: {}, Value: {repeat: {}, smooth: {}}};
-    $.Pixi = {_requestedTextures: {}, data: {}, textureCache: {}};
-    $.Net = {Download: {}};
-    $.fs = require('fs');
-    $.path = require('path');
-    $.url = require('url');
-    $.http = require('http');
+    $.alias = new Object();
+    $.Pixi = new Object();
+    $.Pixi.TextureCache = new Object();
     // =============================================================================
-    // [General] :general
+    // [FileIO] :fileio
     // =============================================================================
-    // =============================================================================
-    // [Get-current] :get
-    //      get the current filename script
-    //      filename : if it is true, just the filename.
-    // =============================================================================
-    $.General.Get.current = function(justFilename) {
-        let current = document.currentScript.src;
-        if (justFilename === true) current = current.split('/').pop();
-        return current;
-    }
-    // =============================================================================
-    // [get-indexObject] 
-    //      object : object value
-    //      element : element that will return the index value
-    //   get -1 if it is not return
-    // =============================================================================
-    $.General.Get.indexObject = function(object, element) {
-        var _indexObject = -1;
-        Object.keys(object).map(function(key, index, array) {
-            if (array[index] === element) _indexObject = index; 
-        })
-        return _indexObject;
-    }
-    // =============================================================================
-    // [folder] : get local folder name
-    // =============================================================================
-    $.General.Get.folder = function() {
-        let path = window.location.pathname.replace(/[^\\\/]*$/, '');
-        return path;
-    }
-    // =============================================================================
-    // get a list of files from a dir
-    // =============================================================================
-    $.General.Get.fileList = function(path, filter, callback) {
-        // check out if the folder exist
-        if (!$.fs.existsSync(path)) {
-            console.log("dir don't foud", path);
-            return;
+    $.FileIO = function() { throw new Error('This is a static class'); }
+    /**
+     * @param {string} filepath local filepath to file | url;
+     * @param {string} type MimeType
+     * @type {string}
+     * @return {string}
+     */
+    $.FileIO.ajax = function(filepath, type) {
+        type = type || "application/json";
+        var xmlHttpRequest = new XMLHttpRequest();
+        xmlHttpRequest.open("GET", filepath, false);
+        if (type && xmlHttpRequest.overrideMimeType) {
+            xmlHttpRequest.overrideMimeType(type);
         }
+        xmlHttpRequest.send();
+        if (xmlHttpRequest.status < 400) { return xmlHttpRequest.responseText } else {
+            throw new Error("Cannot load file " + filepath);
+        }
+    }
+    /**
+     * @desc read xml string and return to document
+     * @param {string} filepath local filepath to file | url
+     * @return {object} return to HTTLDocument 
+     */
+    $.FileIO.xml = function(filepath) {
+        let filetext = String($.FileIO.txt(filepath));
+        var parser = new DOMParser();
+        var result = parser.parseFromString(filetext,  "application/xml");
+        return result;
+    }
+    /**
+     * @desc read JSON file and return to object
+     * @param {string} filepath local filepath to file | url
+     * @return {object}
+     */
+    $.FileIO.json = function(filepath) { return (JSON.parse($.FileIO.ajax(filepath))); }
+    /**
+     * @desc export object to JSON file
+     * @param {object} object that will be exported
+     * @param {string} filepath local filepath to file | url
+     */
+    $.FileIO.toJson = function(object, filepath) {
+        var fs = require('fs');
+        var data = JSON.stringify(object, "\t");
+        if (!filepath.match(/\.json$/i)) filepath += ".json";
+        fs.writeFile(filepath, data, function (err) {
+            console.log(filepath, "\tcreated");
+        })
+    }
+    /**
+     * @desc read a TXT file
+     * @param {string} filepath local filepath to file | url
+     * @return {string}
+     */
+    $.FileIO.txt = function(filepath) { return ($.FileIO.ajax(filepath, "text/plain")) }
+    /**
+     * @desc clean the '\' of pathname
+     * @param {string} pathname
+     * @return {string}
+     */
+    $.FileIO.clean = function(pathaname) { return pathaname.replace(/(\/)[(/)]/g, '/') }
+    /**
+     * @desc get the local folder
+     * @param {string} pathname to folders inside of 'local folder'
+     * @return {string}
+     */
+    $.FileIO.local = function(pathname) {
+        let path = require('path');
+        var localDirBase = path.dirname(process.mainModule.filename);
+        return path.join(localDirBase, pathname);
+    }
+    /**
+     * @desc get the list of files from folder
+     * @param {string} filepath local filepath to file | url
+     * @param {function} callback function that has as argument, the filepath
+     */
+    $.FileIO.list = function(filepath, callback) {
+        // get local folder
+        filepath = $.FileIO.local(filepath);
+        // variables
+        let fs = require('fs'),
+            path = require('path');
+        // folder exist?
+        if (!fs.existsSync(filepath)) { console.warn("folder fon't found", filepath); return []; }
         // get
-        var files = $.fs.readdirSync(path);
+        let files = fs.readdirSync(filepath);
         // each
-        for (let i = 0; i < files.length; i++) {
-            let filename = $.path.join(path, files[i]);
-            let stat = $.fs.lstatSync(filename);
-            if (stat.isDirectory()) {
-                // recursive
-                $.General.Get.fileList(filename, filter, callback);
-            } else if (filter.test(filename)) { callback(filename) };
-        };
+        let i = files.length;
+        while (i--) {
+            let filename = path.join(filepath, files[i]);
+            let status = fs.lstatSync(filename);
+            // check out if is not directory
+            if (!status.isDirectory()) { callback(filename); }
+        } 
+        return files;
     }
     // =============================================================================
-    // [get-files]
+    // [Utils] :utils
     // =============================================================================
-    $.General.Get.Files = function() {
-        let index = 0;
-        root = $.path.join(".", $.path.dirname(window.location.pathname));
-        let files = $.fs.readdirSync(window.dirname);
-        return files.filter(function(i) {
-            let reg = /^[^\.]+$/
-            return !reg.test(i);
-        })
+    $.Utils = function() { throw new Error('This is a static class'); }
+    /**
+     * @desc check out if is object
+     * @param {any}
+     * @return {boolean}
+     */
+    $.Utils.isObject = function(type) { return (type && Object.prototype.toString.call(type) === '[object Object]'); }
+    /**
+     * @desc check out if is array
+     * @param {any}
+     * @return {boolean}
+     */
+    $.Utils.isArray = function(type) { return (type && Object.prototype.toString.call(type) === '[object Array]'); }
+     /**
+     * @desc check out if is function
+     * @param {any} 
+     * @return {boolean}
+     */
+    $.Utils.isFunction = function(type) { return (type && Object.prototype.toString.call(type) === '[object Function]'); }
+    /**
+     * @desc check out if is boolean type
+     * @param {string} type 
+     * if is 'string', will check out by:
+     *  return [true] when is "true", "yes", "on"
+     *  return [false] when is "false", "no", "off"
+     * if is 'number', will check out by:
+     *  return [true] when is 1
+     *  return [false] when is 0
+     * @param {boolean} booleanDefault | for default, return this param. Default is false
+     * @return {boolean}
+     */
+    $.Utils.isBoolean = function(type, booleanDefault) {
+        // if is boolean
+        if (type instanceof Boolean) return type;
+        // if is string
+        if (type instanceof String) {
+            // lowercase
+            type = type.toLowerCase();
+            // check out true value
+            if (type.match(/^(true|yes|on|enable)/i)) return true;
+            // check out false value
+            if (type.match(/^(false|no|off|disable)/i)) return false;
+        } else if (type instanceof Number) {
+            // return true
+            if (type === 1) return true;
+            // return false
+            if (type === 0) return false;
+        }
+        // default return
+        return booleanDefault || false;
     }
-    // =============================================================================
-    // [anyKeyboard] :key
-    // check out if press any key of keyboard 
-    // =============================================================================
-    $.General.Key.anyKeyboard = function() {
-        var _anyKeyboard = false;
-        Object.keys(Input.keyMapper).map(function(key, index) {
-            if (Input.isPressed(Input.keyMapper[key])) _anyKeyboard = true;  
-        })
-        return _anyKeyboard;
+    /**
+     * @desc check out if has value on variable
+     * @param {any} 
+     * @return {boolean}
+     */
+    $.Utils.hasValue = function(variable) { return (variable !== undefined || variable !== null); } 
+    /**
+     * @desc get index by propriety of object
+     * @param {object} object that will be checked
+     * @param {string} propriety that will be checked
+     * @param {string} value -> that will be found and return to his index;
+     */
+    $.Utils.objectIndex = function(object, propriety, value) {
+        object.map(function (element) { return element[propriety];}).indexOf(value);
     }
-    // =============================================================================
-    // [anyGamepad]
-    // press any key of gamepad
-    // =============================================================================
-    $.General.Key.anyGamepad = function() {
-        var _anyGamepad = false;
-        Object.keys(Input.gamepadMapper).map(function(key, index) {
-            if (Input.isPressed(Input.gamepadMapper[key])) _anyGamepad = true;  
-        })
-        return _anyGamepad;
+    /**
+     * @desc return the next element from 'object'
+     * @param {object} 
+     * @param {string} current keyname
+     * @return {object}
+     */
+    $.Utils.nextObject = function(object, current) {
+        var next  = (Object.keys(object).indexOf(current) + 1) % Object.keys(object).length;
+        console.log(object[Object.keys(object)[next]], next)
+        return object[Object.keys(object)[next]];
     }
-    // =============================================================================
-    // [any] : any key pressed
-    // =============================================================================
-    $.General.Key.any = function() {
-        return ($.General.Key.anyKeyboard() || $.General.Key.anyGamepad() || TouchInput.isTriggered());
-    }
-    // =============================================================================
-    // keyCode
-    // =============================================================================
-    $.General.Key.char = function(keyCode) {
-        return String.fromCharCode(keyCode);
-    }
-    // =============================================================================
-    // [setup] :mouse
-    //   -> this.mouse.{param} = (...)
-    //   param:
-    //      -> over | out -> create as function.
-    //      -> trigger | repeat | press
-    //          -> on | off -> create as function.
-    //      -> x | y -> Number 
-    //      -> active -> Boolean (to use the mouse function)
-    //      -> drag
-    //          -> active -> Boolean (to use the drag mouse function)
-    //          -> start -> don't use this var.
-    //          -> function -> create as function.
-    // =============================================================================
-    $.General.Mouse.setup = function() {
-        return ({
-            x: 0,
-            y: 0,
-            active: false,
-            over: null,
-            out: null, 
-            trigger: {on: null, off: null},
-            press: {on: null, off: null},
-            repeat: {on: null, off: null},
-            drag: {active: false, start: false, function: null}
-        });
-    }
-    // =============================================================================
-    // [dialog] :dialog
-    // =============================================================================
-
-    // =============================================================================
-    // [dialog-file] : get a filename from a folder (choose)
-    // =============================================================================
-    $.General.Dialog.file.open = function(callback) {
-        let input = document.createElement("input");
-        input.setAttribute("type", "file");
-        input.addEventListener("change", function(event) {
-            callback(this.value);
-        }, false);
-        input.click();
-    }
-    // =============================================================================
-    // [dialog-file-filter] : get a file with filter
-    // =============================================================================
-    $.General.Dialog.file.filter = function(filter, callBack) {
-        let input = document.createElement("input");
-        input.setAttribute("type", "file");
-        input.setAttribute("accept", filter || "");
-        input.addEventListener("change", function(event) {
-            callback(this.value);
-        }, false);
-        input.click();
+    /**
+     * @desc return the previous element from 'object'
+     * @param {object} 
+     * @param {string} current keyname
+     * @return {object}
+     */
+    $.Utils.predObject = function(object, current) {
+        var pred  = (Object.keys(object).indexOf(current) - 1) % Object.keys(object).length;
+        return object[Object.keys(object)[pred]];
     }
     // =============================================================================
     // [DMath] :dmath
     // =============================================================================
-    // =============================================================================
-    // [percentTo] 
-    // =============================================================================
-    $.DMath.percentTo = function(current, min, max) {
-        return ((current * min) / max);
-    }
-    // =============================================================================
-    // [toPercent] 
-    // =============================================================================
-    $.DMath.toPercent = function(current, min) {
-        return ((current * min) / 100);
-    }
-    // =============================================================================
-    // [rand] get a random numeric between a min and max value.
-    // =============================================================================
-    $.DMath.rand = function(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-    // =============================================================================
-    // [randInt] : get a random numeric between a min and max value with integer
-    // value.
-    // =============================================================================
+    $.DMath = function() { throw new Error('This is a static class'); }
+    $.DMath.Position = function() { throw new Error('This is a static class'); }
+    /**
+     * @desc turn value to percent by max
+     * @param {number, number, number}
+     * @return {number}
+     */
+    $.DMath.percentTo = function(current, min, max) { return ((current * min) / max); }
+    /**
+     * @desc turn value to percent
+     * @param {number, number}
+     * @return {number}
+     */
+    $.DMath.toPercent = function(current, min) { return ((current * min) / 100); }
+    /**
+     * @desc get a random numeric between a min and max value.
+     * @param {number, number}
+     * @return {number}
+     */
+    $.DMath.rand = function(min, max) { return Math.random() * (max - min) + min; }
+    /**
+     * @desc get a random numeric between a min and max value with integer value.
+     * @param {number, number}
+     * @return {number}
+     */
     $.DMath.randInt = function(min, max) {
         min = Math.ceil(min); max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        return ~~(Math.random() * (max - min + 1)) + min;
     }
-    // =============================================================================
-    // [randomic] : variation of a value
-    // =============================================================================
+    /**
+     * @desc get a randomic variation of a number
+     * @param {number, number}
+     * @return {number}
+     */
     $.DMath.randomic = function(current, variation) {
         let random = $.DMath.randInt(0, 1) === 0 ? $.DMath.rand(0, variation) : -$.DMath.rand(0, variation);
         current = (current + $.DMath.rand(0, 2)) + (current + random);
         return (Math.round(current) / 2);
     } 
-    // =============================================================================
-    // [repeat] : go among two value with a speed, repeating.
-    // =============================================================================
-    $.DMath.repeat = function(id, min, max, speed) {
-        $.DMath.Value.repeat[id] = $.DMath.Value.repeat[id] || {}; 
-        $.DMath.Value.repeat[id].value = $.DMath.Value.repeat[id].value || 0;
-        if ($.DMath.Value.repeat[id].turn) {
-            if ($.DMath.Value.repeat[id].value <= max) { $.DMath.Value.repeat[id].value += speed} else { $.DMath.Value.repeat[id].turn = false }
-        } else {
-            if ($.DMath.Value.repeat[id].value >= min) { $.DMath.Value.repeat[id].value -= speed} else { $.DMath.Value.repeat[id].turn = true }
-        }
-        return $.DMath.Value.repeat[id].value;
-    }
-    // =============================================================================
-    // [smooth] : go to a target value with smoothie
-    // =============================================================================
-    $.DMath.smooth = function(hash) {
-        $.DMath.Value.smooth[hash.id] = $.DMath.Value.smooth[hash.id] || {};
-        $.DMath.Value.smooth[hash.id].value = $.DMath.Value.smooth[hash.id].value || 0;
-        hash.boost = hash.boost || Math.PI;
-        let _boost = 0;
-        hash.compare = hash.compare || "forward";
-        if (hash.compare === ">=" || hash.compare === "forward" || hash.compare === 0) {
-            if ($.DMath.Value.smooth[hash.id].value <= hash.target) {
-                _boost = Math.ceil(-$.DMath.percentTo(hash.boost, $.DMath.Value.smooth[hash.id].value, hash.target * 2));
-                $.DMath.Value.smooth[hash.id].value += (hash.speed + _boost);
-            } 
-        }
-        return $.DMath.Value.smooth[hash.id].value - 1;
-    }
-    // =============================================================================
-    // [screen] :position
-    //  hash -> Object
-    //      type: type of position 
-    //      object: this class have to be a width & height value
-    //      width: width of object. If you don't setup by object.
-    //      height: height of object. If you don't setup by object.
-    // =============================================================================
+    /**
+     * @desc display object based on screen
+     * @param {object} hash that contains:
+     *      type: [type of position],
+     *      object: [this class need to have width & height function],
+     *      [optional] width: [width of object, case don't have]
+     *      [optional] height [height of object, case don't have]
+     * @return {Point}
+     */
     $.DMath.Position.screen = function(hash) {
         // default position 
         let point = new Point(0, 0);
@@ -331,322 +367,232 @@ if (typeof Number.prototype.isBetween === 'undefined') {
         if (hash.type === "center" || hash.type === "c" || hash.type === 0 ) {
             point.x = (Graphics.boxWidth - width) / 2;
             point.y = (Graphics.boxHeight - height) / 2;
-        } else if (hash.type === "center-left" || hash.type === "cl" || hash.type === 1) {
+        } else if (hash.type === "centerLeft" || hash.type === "cl" || hash.type === 1) {
             point.x = (Graphics.boxHeight - height) / 2;
-        } else if (hash.type === "center-right" || hash.type === "cr" || hash.type === 2) {
+            point.y = (Graphics.boxHeight - height) / 2;
+        } else if (hash.type === "centerRight" || hash.type === "cr" || hash.type === 2) {
             point.x = Graphics.boxWidth - width;
             point.y = (Graphics.boxHeight - height) / 2;
-        } else if (hash.type === "center-top" || hash.type === "ct" || hash.type === 3) {
+        } else if (hash.type === "centerTop" || hash.type === "ct" || hash.type === 3) {
             point.x = (Graphics.boxWidth - width) / 2;
-        } else if (hash.type === "center-bottom" || hash.type === "cb" || hash.type === 4) { 
+        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) { 
             point.x = (Graphics.boxWidth - width) / 2;
             point.y = Graphics.boxHeight - height;
-        } else if (hash.type === "upper-right" || hash.type === "ur" || hash.type === 5) { 
+        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) { 
             point.x = Graphics.boxWidth - width;
-        } else if (hash.type === "bottom-right" || hash.type === "br" || hash.type === 6) {
+        } else if (hash.type === "bottomRight" || hash.type === "br" || hash.type === 6) {
             point.x = Graphics.boxWidth - width;
             point.y =  Graphics.boxHeight - height;
-        } else if (hash.type === "bottom-left" || hash.type === "bf" || hash.type === 7) {
+        } else if (hash.type === "bottomLeft" || hash.type === "bf" || hash.type === 7) {
             point.y =  Graphics.boxHeight - height;
         } 
         // return default if nothing is setup
         return point;
     }
-    // =============================================================================
-    // [object]
-    //  hash -> object value
-    //      -> type: -> default position type
-    //      -> a: -> first object, that will change the position |has to be x, y, width, height|
-    //      -> b: -> second object, that will be the reference point |has to be x, y, width, height|
-    // =============================================================================
-    $.DMath.Position.object = function(hash) {
+    /**
+     * @desc display object based on another obejct
+     * @param {object} hash that contains:
+     *      type: [type of position],
+     *      a: [first object, that will change the position |need to have x, y, width, height|]
+     *      b: [second object, that will be the reference point |need to have x, y, width, height|]
+     * @return {Point}
+     */
+    $.DMath.Position.sprite = function(hash) {
         // default position 
         let point = new Point(hash.a.x, hash.a.y);
         // type
         if (hash.type === "center" || hash.type === "c" || hash.type === 0 ) {
-            point.x = hash.b.x + (hash.b.width - hash.a.width) / 2;
-            point.y = hash.b.y + (hash.b.height - hash.a.height) / 2;
-        } else if (hash.type === "center-left" || hash.type === "cl" || hash.type === 1) {
+            point.x = hash.b.x + ((hash.b.width - hash.a.width) / 2);
+            point.y = hash.b.y + ((hash.b.height - hash.a.height) / 2);
+        } else if (hash.type === "centerLeft" || hash.type === "cl" || hash.type === 1) {
             point.x = hash.b.x;
             point.y = hash.b.y + (hash.b.height - hash.a.height) / 2;
-        } else if (hash.type === "center-right" || hash.type === "cr" || hash.type === 2) {
+        } else if (hash.type === "centerRight" || hash.type === "cr" || hash.type === 2) {
             point.x = hash.b.x + hash.a.width;
             point.y = hash.b.y + (hash.b.height - hash.a.height) / 2;
-        } else if (hash.type === "center-top" || hash.type === "ct" || hash.type === 3) {
+        } else if (hash.type === "centerTop" || hash.type === "ct" || hash.type === 3) {
             point.x = hash.b.x + (hash.b.width - hash.a.width) / 2;
             point.y = hash.b.y;
-        } else if (hash.type === "center-bottom" || hash.type === "cb" || hash.type === 4) { 
+        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) { 
             point.x = hash.b.x + (hash.b.width - hash.a.width) / 2;
             point.y = hash.b.y + hash.b.height;
-        } else if (hash.type === "upper-right" || hash.type === "ur" || hash.type === 5) { 
+        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) { 
             point.x = hash.b.x + hash.b.width;
             point.y = hash.b.y - hash.b.height;
-        } else if (hash.type === "upper-left" || hash.type === "ul" || hash.type === 6) { 
+        } else if (hash.type === "upperLeft" || hash.type === "ul" || hash.type === 6) { 
             point.x = hash.b.x;
             point.y = hash.b.y - hash.b.height;
-        } else if (hash.type === "bottom-right" || hash.type === "br" || hash.type === 7) {
+        } else if (hash.type === "bottomRight" || hash.type === "br" || hash.type === 7) {
             point.x = hash.b.x + hash.b.width;
             point.y = hash.b.y + hash.b.height;
-        } else if (hash.type === "bottom-left" || hash.type === "bf" || hash.type === 8) {
+        } else if (hash.type === "bottomLeft" || hash.type === "bf" || hash.type === 8) {
             point.x = hash.b.x;
             point.y = hash.b.y + hash.b.height;
         } 
         // return
         return point;
     }
+    // ============================================================================= 
+    // [TouchInput] :touch
     // =============================================================================
-    // [Calc] :calc
-    // =============================================================================
-    $.DMath.Calc.Item = {};
-    // =============================================================================
-    // [calc-item-increase] > increase using reference something.;
-    // =============================================================================
-    $.DMath.Calc.Item.Use = function(hash) {
-        // get
-        let attr = hash.attr; // valor do atributo. O quanto aumenta, etc.
-        let spirit = hash.spirit || 1.0; // se o personagem tá com espírito alto. Percentagem.
-        let type = hash.type || 0.2; // raridade do item (0.1-1.0). Percentagem.
-        let delta = hash.delta || 0.1; // taxa de evasão do item. Percentagem.
-        let skill = hash.body || 0.1; // o quão o corpo do personagem irá se nutrir do item. Percentagem.
-        let value;
-        // calc
-        attr = $.DMath.randomic(attr, (attr*type));
-        value = (attr * skill);
-        value = $.DMath.randomic(value, (delta*value) * spirit);
-        // return
-        return value;
-    }
-
-
-    // =============================================================================
-    // [Net] :net
-    // =============================================================================
-
-    // =============================================================================
-    // [Download-Url] :download
-    // download a file from url and show option to save
-    // =============================================================================
-    $.Net.Download.Url = function(filename, url) {
-        // element
-        let link = document.createElement("a");
-        link.download = filename;
-        link.target = "_blank";
-        // url
-        link.url = url;
-        document.body.appendChild(link);
-        link.click();
-        // clean up
-        document.body.removeChild(link);
+    /**
+     * @desc remove the limit to check out the position of mouse
+     * @type {Snippet}
+     * @return {function}
+     */
+    TouchInput._onMouseMove = function(event) {
+        var x = Graphics.pageToCanvasX(event.pageX);
+        var y = Graphics.pageToCanvasY(event.pageY);
+        this._onMove(x, y);
     };
-    // =============================================================================
-    // [pixi] :pixi
-    // =============================================================================
-    // =============================================================================
-    // [pixi-manager] :pmanager
-    // =============================================================================
-    $.Pixi.Manager = class {
-        // [constructor]
-        constructor() {
-            super();
-            this.data = this.data || {};
-            this._isReady = false;
-            this.loadedTextures = {};
-            this._container = {};
-        }
-        // get container
-        container(id, uchild) {
-            if (id === undefined) id = "default";
-            if (this._container[id]) {
-                if (uchild === undefined) SceneManager._scene.addChild(this._container[id]);
-                return this._container[id];
-            } else {
-                this._container[id] = new PIXI.Container();
-                if (uchild === undefined) SceneManager._scene.addChild(this._container[id]);
-                return this._container[id];
-            }
-        }
-        
-        // dispose
-        dispose() {
-            if ((this.data === undefined) || (typeof this.data !== 'object')) return;
-            Object.keys(this.data).map(function(key, index) {
-                if (this.data[key].dispose)
-                    this.data[key].dispose();
-            }.bind(this))
-            this.data = {};
-            $.Pixi._requestedTextures = {};
-        }
-        // update
-        update() {
-            if ((this.data === undefined) && (typeof this.data !== 'object')) return;
-            Object.keys(this.data).map(function(key, index) {
-                if (this.data[key].update)
-                    this.data[key].update();
-            }.bind(this))
-        }
+    // ============================================================================= 
+    // [SceneManager] :sceneManager
+    // ============================================================================= 
+    /**
+     * @desc check out if the current scene is
+     * @type {Snippet}
+     * @param {string} name 
+     * @return {boolean}
+     */
+    SceneManager.prototype.isScene = function(name) { return SceneManager._scene && SceneManager._scene.constructor === name; }
+    // ============================================================================= 
+    // [PixiManager] :piximanager
+    // ============================================================================= 
+    $.Pixi.Manager = function() { throw new Error('This is a static class'); }
+    /**
+     * @desc load texture using PIXI
+     * @param {object} request that:
+     *      keyname shall be the ID to '$.Pixi.Manager.cache(id)'
+     *      value shall be the filepath to load the texture
+     * @return {boolean}
+     */
+    $.Pixi.Manager.load = function(request) {
+        if (!$.Utils.isObject(request)) return false;
+        var loader = loader || new PIXI.loaders.Loader();
         // add
-        add(pixi, index) {
-            if (pixi !== undefined) {
-                this.data[index] = pixi;
-            }
+        for (name in request) {
+            let pathname = request[name];
+            if (!$.Pixi.TextureCache.hasOwnProperty(name)) {
+                loader.add({
+                    name: name,
+                    url: pathname
+                });
+            } 
         }
-        // off
-        off(index) {
-            if (this.data[index] !== undefined) {
-                this.data[index].dispose();
-                delete this.data[index];
+        // load
+        loader.load(function (ld, resource) {
+            for (let name in resource) {
+                $.Pixi.TextureCache[name] = resource[name].texture;
             }
-        }
-        // get texture
-        texture(path) {
-            return this.loadedTextures[path];
-        }
-        // example
-        /*
-        // preUpdate
-                this._preUpdate = function() {
-                    if (Haya.Core.pixi.data['back']._loaded) {
-                        Haya.Core.pixi.swapChildren('version', 'back', 1);
-                        this._preUpdate = null;
-                    }
-                }
-        */
-        // swapChildren
-        swapChildren(childA, childB, condition) {
-            let a = this.data[childA].sprite;
-            let b = this.data[childB].sprite;
-            let _condition = condition === undefined ? 1 : condition
-            if (_condition === 0) {
-                SceneManager._scene.swapChildren(a, b);
-            } else if (_condition === 1) {
-                let cA = SceneManager._scene.getChildIndex(a);
-                let cB = SceneManager._scene.getChildIndex(b);
-                if (cA > cB) { return false; } else { SceneManager._scene.swapChildren(a, b) }
-            }
-        }
-        // loadRequestedTextures
-        loadRequestedTextures() {
-            // if don't need more
-            if ($.Pixi._requestedTextures.length <= 0) {
-                this._isReady = true;
-            }
-            // each object
-            let loader = new PIXI.loaders.Loader();
-            for (let name in $.Pixi._requestedTextures) {
-                let path = $.Pixi._requestedTextures[name];
-                // cache
-                if ($.Pixi.textureCache[path]) {
-                    this.loadedTextures[path] = $.Pixi.textureCache[path].clone();
-                } else {
-                    loader.add(path);
-                }
-            }
-            // self
-            let self = this;
-            loader.load(function(ld, resource) {
-                for (let name in resource) {
-                    self.loadedTextures[name] = resource[name].texture;
-                }
-                self._isReady = true;
-            })
+        })
+        return true;
+    }
+    /**
+     * @desc Rreturn to texture cache by ID | setup on '$.Pixi.Manager.load'
+     * @param {string} 
+     * @return {*} 
+     *  return to PIXI.Texture
+     *  if don't exist, return to empty.
+     */
+    $.Pixi.Manager.cache = function(id) {
+        if ($.Pixi.TextureCache.hasOwnProperty(id)) {
+            return $.Pixi.TextureCache[id];
+        } else {
+            return PIXI.Texture.EMPTY;
         }
     }
-    // ============================================================================= 
-    // data
-    // ============================================================================= 
-    $.Pixi.data = new $.Pixi.Manager();
-    // ============================================================================= 
-    // prepareTexture
-    // ============================================================================= 
-    $.Pixi.prepareTexture = function(path) {
-        if (typeof path === 'array') {
-            for (let name in path) {
-                $.Pixi._requestedTextures[name] = name;
-            }
-        } else if (typeof path === 'string') {
-            $.Pixi._requestedTextures[path] = path;
-        }
-    }
-    // ============================================================================= 
-    // [Picture] :picture
-    // Example:
-    /*
-        Haya.Pixi.data.add(new Picture(filename, function() {
-            /.../
-        }), 'index')
-    */
-    // ============================================================================= 
-    Picture.prototype = Object.create(Picture.prototype);
-    Picture.prototype.constructor = Picture;
-    // ============================================================================= 
-    // [initialize]
-    //      texture : texture
-    //      callback
-    // ============================================================================= 
-    Picture.prototype.initialize = function(filename, callback, idcont) {
-        // arguments info
-        this._filename = filename;
-        this._x = Graphics.pageToCanvasX(1);
-        this._y = Graphics.pageToCanvasX(1);
-        this._loaded = false;
-        this._callBack = callback;
-        this._afterUpdate = null;
-        this._preUpdate = null;
-        // mouse function
-        this.mouse = $.General.Mouse.setup();
-        // sprite
-        this.sprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
-        this.sprite.visible = false;
-        // addchild
-        $.Pixi.data.container(idcont).addChild(this.sprite);
-        // load-on
-        let loader = new PIXI.loaders.Loader();
-        loader.add({
-            name: 'picture',
-            url: this._filename,
-        }, function() {
-            // complete load
-            this.sprite.texture = PIXI.Texture.fromImage(this._filename);
-            // setup after loaded
+    // =============================================================================
+    // [:sprite]
+    // =============================================================================
+    $.SpriteObject = class extends PIXI.Container {
+        /**
+         * @param {object} hash that contains
+         *      [string] type: [text or picture, default is picture],
+         *      [PIXI.Texture] texture: [just if the type is "picture"],
+         *      [string] text: [first text value, if the type is "texture"],
+         *      [class] stage: [place where this sprite will be add on child, for default is SceneManger._scene]
+         * @param {function} callback to setup
+         */
+        constructor(hash, callback) {
+            super.constructor();
+            this.hash = hash;
+            this.callback = callback;
             this.setup();
-        }.bind(this));
-        loader.load();
-    }
-    // ============================================================================= 
-    // setup
-    // ============================================================================= 
-    Picture.prototype.setup = function() {
-        this._loaded = true;
-        this.sprite.x = this._x;
-        this.sprite.y = this._y;
-        this.sprite.interactive = true;
-        this.sprite.renderable = true;
-        this.sprite.hitArea = new PIXI.Rectangle(this.sprite.x, this.sprite.y, this.sprite.width, this.sprite.height);
-        this.sprite.visible = true;
-        // callback
-        if (typeof this._callBack === 'function')  this._callBack.apply(this, arguments);
-    }
-    // ============================================================================= 
-    // [dispose]
-    // ============================================================================= 
-    Picture.prototype.dispose = function() {
-        if (this._loaded)
-            this.sprite.destroy(true); 
-    }
-    // ============================================================================= 
-    // [update]
-    // ============================================================================= 
-    Picture.prototype.update = function() {
-        if (this._loaded) {
-            // preUpdate
-            if (typeof this._preUpdate === 'function')  this._preUpdate.apply(this, arguments);
+            this.load();
+            if ($.Utils.isFunction(this.callback)) this.callback.apply(this, arguments);
+        }
+        // -------------------------------------------------------------------------
+        // setup
+        // ------------------------------------------------------------------------- 
+        setup() {
+            // default setup
+            this._x = this.hash.x || 0;
+            this._y = this.hash.y || 0;
+            this._loaded = false;
+            this._update = null;
+            // mouse setup
+            this.mouse = ({
+                x: 0,
+                y: 0,
+                active: false,
+                over: null,
+                out: null, 
+                trigger: {on: null, off: null},
+                press: {on: null, off: null},
+                repeat: {on: null, off: null},
+                drag: {active: false, start: false, function: null}
+            });
+        }
+        // -------------------------------------------------------------------------
+        // load texture
+        // -------------------------------------------------------------------------
+        load() {
+            // type | default is 'picture'
+            this.hash.type = this.hash.type || "picture";
+            // condition
+            if (this.hash.type === "picture") {
+                // default sprite
+                this.sprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
+                // there is texture?
+                if (this.hash.texture) {
+                    this.sprite.texture = this.hash.texture;
+                }
+            } else if (this.hash.type === "text") {
+                // default sprite
+                this.sprite = new PIXI.Text("");
+                this.sprite.text = this.hash.text || "";
+            }
+            // stage | default is 'scene'
+            this.hash.stage = this.hash.stage || SceneManager._scene;
+            this.hash.stage.addChild(this.sprite);
+            // setup sprite
+            this.sprite.x = this._x;
+            this.sprite.y = this._y;
+            this.sprite.renderable = true;
+            this.sprite.visible = true;
+            this.sprite.hitArea = new PIXI.Rectangle(this.sprite.x, this.sprite.y, this.sprite.width, this.sprite.height);
+            // loaded
+            this._loaded = true;
+        }
+        /**
+         * @desc dispose element
+         * @param {boolean} destroy texture
+         */
+        dispose(destroy) { 
+            if (this._loaded) {
+                this.sprite.destroy(destroy);  
+            } 
+        }
+        // -------------------------------------------------------------------------
+        // update
+        // -------------------------------------------------------------------------
+        update() {
+            // return if is not loaded
+            if (this._loaded === false) return;
             // render
             this.sprite.updateTransform();
             Graphics.render(this.sprite);
-            //this.sprite.hitArea.x = this.sprite.x - ( (this.sprite.x * this.sprite.scale.x) / 2 );
-            //this.sprite.hitArea.y = this.sprite.y - ( (this.sprite.y * this.sprite.scale.y) / 2 );
-            //this.sprite.hitArea.width = this.sprite.width + ( (this.sprite.width * this.sprite.scale.x) / 2);
-            //this.sprite.hitArea.height = this.sprite.height + ( (this.sprite.height * this.sprite.scale.y) / 2);
+            // update hit area
             this.sprite.hitArea.x = this.sprite.x;
             this.sprite.hitArea.y = this.sprite.y;
             // check out if the mouse will be used on
@@ -654,390 +600,119 @@ if (typeof Number.prototype.isBetween === 'undefined') {
                 // get the mouse position
                 this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
                 this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
-                this.mouseSetup();
+                this.updateMouse();
             }
-            // afterUpdate
-            if (typeof this._afterUpdate === 'function')  this._afterUpdate.apply(this, arguments);
+            // _update
+            if ($.Utils.isFunction(this._update)) this._update.apply(this, arguments);
         }
-    }
-    // =============================================================================
-    // [position] : library of position to class
-    // =============================================================================
-    Picture.prototype.position = function(type) {
-        var _position = $.DMath.Position.screen({type: type, object: this.sprite});
-        this.sprite.x = _position.x;
-        this.sprite.y = _position.y;
-    }
-    // =============================================================================
-    // [mirror X] : mirror sprite in X achor
-    // =============================================================================
-    Picture.prototype.mirrorX = function(point) {
-        point = point || 1;
-        this.sprite.anchor.x = point; /* 0 = top, 0.5 = center, 1 = bottom */
-        this.sprite.scale.x *= -1;
-    }
-    // =============================================================================
-    // [mirror Y] : mirror sprite in Y achor
-    // =============================================================================
-    Picture.prototype.mirrorY = function(point) {
-        point = point || 1;
-        this.sprite.anchor.y = point; /* 0 = top, 0.5 = center, 1 = bottom */
-        this.sprite.scale.y *= -1;
-    }
-    // =============================================================================
-    // [_mouseOver] : check out if the mouse is over
-    // =============================================================================
-    Picture.prototype._mouseOver = function() {
-        if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
-        if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
-            if (this.mouse.y.isBetween(this.sprite.hitArea.y, this.sprite.hitArea.y + this.sprite.hitArea.height)) {
-                return true;
-            }
+        /**
+         * @desc display this sprite based on screen
+         * @param {string} type see on $.DMath.Position.screen
+         */
+        position(type) {
+            let _position = $.DMath.Position.screen({type: type, object: this.sprite});
+            this.sprite.x = _position.x;
+            this.sprite.y = _position.y;
         }
-        return false; 
-    }
-    // =============================================================================
-    // [mouseSetup] : run all functions and settings about the Mouse.
-    // =============================================================================
-    Picture.prototype.mouseSetup = function() {
-        // check out if the mouse is over or not
-        if (this._mouseOver()) {
-            // function that will be call
-            if (typeof this.mouse.over === 'function') this.mouse.over.apply(this);
-            // check out if was triggered inside
-            if (TouchInput.isTriggered()) 
-                if (typeof this.mouse.trigger.on === 'function') this.mouse.trigger.on.apply(this);
-            // check out if was pressed inside
-            if (TouchInput.isLongPressed()) {
-                if (!this.mouse.drag.active) {
-                    if (typeof this.mouse.press.on === 'function') this.mouse.press.on.apply(this);
-                } else {
-                    if (typeof this.mouse.drag.function === 'function') this.mouse.drag.function.apply(this);
-                    this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
-                    this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
-                }
+        /**
+         * @desc invert sprite
+         * @param {boolean} type 
+         *  [true] will invert by X axis
+         *  [false] will invert by Y axis
+         * @param {number} point to anchor set 
+         */
+        mirror(type, point) {
+            point = point || 1;
+            type  = type  || 0;
+            if (type) {
+                this.sprite.anchor.x = point; /* 0 = top, 0.5 = center, 1 = bottom */
+                this.sprite.scale.x *= -1;
             } else {
-               if (this.mouse.drag.active)  this.mouse.drag.start = false;
-            }
-            // check out if was repeated inside
-            if (TouchInput.isRepeated())
-                if (typeof this.mouse.repeat.on === 'function') this.mouse.repeat.on.apply(this);
-        } else {
-            // function that will be call
-            if (typeof this.mouse.out === 'function') this.mouse.out.apply(this);
-            // check out if was triggered inside
-            if (TouchInput.isTriggered()) 
-                if (typeof this.mouse.trigger.off === 'function') this.mouse.trigger.off.apply(this);
-            // check out if was pressed inside
-            if (TouchInput.isLongPressed())
-                if (typeof this.mouse.press.off === 'function') this.mouse.press.off.apply(this);
-            // check out if was repeated inside
-            if (TouchInput.isRepeated())
-                if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
-        }
-    }
-    // =============================================================================
-    // [Text] :text
-    //      -> to display a text.
-    // Example:
-    /*
-    Haya.Pixi.data.add(new Text("text", function() {
-        /.../
-    }), 'example')
-    */
-    // =============================================================================
-    // =============================================================================
-    // create constructor | prototype
-    // =============================================================================
-    Text.prototype = Object.create(Text.prototype);
-    Text.prototype.constructor = Text;
-    // =============================================================================
-    // [initialize]
-    //      -> text -> [String]
-    //      -> x | y -> [Number] 
-    //      -> callBack -> [function]
-    // =============================================================================
-    Text.prototype.initialize = function(text, callBack, idcont) {
-        // arguments info
-        this._text = text;
-        this._x = Graphics.pageToCanvasX(1);
-        this._y = Graphics.pageToCanvasX(1);
-        this._loaded = false;
-        this._callBack = callBack;
-        this._afterUpdate = null;
-        this._preUpdate = null;
-        // mouse function
-        this.mouse = $.General.Mouse.setup();
-        // load
-        this.sprite = new PIXI.Text(this._text);
-        // addchild
-        $.Pixi.data.container(idcont).addChild(this.sprite);
-        // setup
-        this.sprite.x = this._x;
-        this.sprite.y = this._y;
-        this.sprite.interactive = true;
-        this.sprite.renderable = true;
-        this.sprite.hitArea = new PIXI.Rectangle(this.sprite.x, this.sprite.y, this.sprite.width, this.sprite.height);
-        // callback
-        if (typeof this._callBack === 'function')  this._callBack.apply(this, arguments);
-    }
-    // =============================================================================
-    // set style
-    // =============================================================================
-    Text.prototype.style = function(_style) { this.sprite.style = _style; }
-    // =============================================================================
-    // new text
-    // =============================================================================
-    Text.prototype.text = function(text) { this.sprite.text = text; }
-    // =============================================================================
-    // [dispose] : destroy the object
-    // =============================================================================
-    Text.prototype.dispose = function() {
-        if (this.sprite.destroy)
-            this.sprite.destroy(true);
-    }
-    // =============================================================================
-    // [update] : update function
-    // =============================================================================
-    Text.prototype.update = function() {
-        // preUpdate
-        if (typeof this._preUpdate === 'function')  this._preUpdate.apply(this, arguments);
-        // render
-        this.sprite.updateTransform();
-        Graphics.render(this.sprite);
-        // hitArea
-        this.sprite.hitArea.x = this.sprite.x;
-        this.sprite.hitArea.y = this.sprite.y;
-        this.sprite.hitArea.width = this.sprite.width;
-        this.sprite.hitArea.height = this.sprite.height;
-        // check out if the mouse will be used on
-        if (this.mouse.active) {
-            // get the mouse position
-            this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
-            this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
-            this.mouseSetup();
-        }
-        // afterUpdate
-        if (typeof this._afterUpdate === 'function')  this._afterUpdate.apply(this, arguments);
-    }
-    // =============================================================================
-    // [position] : library of position to class
-    // =============================================================================
-    Text.prototype.position = function(type) {
-        var _position = $.DMath.Position.screen({type: type, object: this.sprite});
-        this.sprite.x = _position.x;
-        this.sprite.y = _position.y;
-    }
-    // =============================================================================
-    // [_mouseOver] : check out if the mouse is over
-    // =============================================================================
-    Text.prototype._mouseOver = function() {
-        if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
-        if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
-            if (this.mouse.y.isBetween(this.sprite.hitArea.y, this.sprite.hitArea.y + this.sprite.hitArea.height)) {
-                return true;
+                this.sprite.anchor.y = point; /* 0 = top, 0.5 = center, 1 = bottom */
+                this.sprite.scale.y *= -1;
             }
         }
-        return false; 
-    }
-    // =============================================================================
-    // [mouseSetup] : run all functions and settings about the Mouse.
-    // =============================================================================
-    Text.prototype.mouseSetup = function() {
-        // check out if the mouse is over or not
-        if (this._mouseOver()) {
-            // function that will be call
-            if (typeof this.mouse.over === 'function') this.mouse.over.apply(this);
-            // check out if was triggered inside
-            if (TouchInput.isTriggered()) 
-                if (typeof this.mouse.trigger.on === 'function') this.mouse.trigger.on.apply(this);
-            // check out if was pressed inside
-            if (TouchInput.isLongPressed()) {
-                if (!this.mouse.drag.active) {
-                    if (typeof this.mouse.press.on === 'function') this.mouse.press.on.apply(this);
-                } else {
-                    if (typeof this.mouse.drag.function === 'function') this.mouse.drag.function.apply(this);
-                    this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
-                    this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
+        // -------------------------------------------------------------------------
+        // check out if mouse is over
+        // -------------------------------------------------------------------------
+        mouseOver() {
+            if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
+            if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
+                if (this.mouse.y.isBetween(this.sprite.hitArea.y, this.sprite.hitArea.y + this.sprite.hitArea.height)) {
+                    return true;
                 }
+            }
+            return false; 
+        }
+        // -------------------------------------------------------------------------
+        // update the mouse
+        // -------------------------------------------------------------------------
+        updateMouse() {
+            // check out if the mouse is over or not
+            if (this.mouseOver()) {
+                // function that will be call
+                if (typeof this.mouse.over === 'function') this.mouse.over.apply(this);
+                // check out if was triggered inside
+                if (TouchInput.isTriggered()) 
+                    if (typeof this.mouse.trigger.on === 'function') this.mouse.trigger.on.apply(this);
+                // check out if was pressed inside
+                if (TouchInput.isLongPressed()) {
+                    if (!this.mouse.drag.active) {
+                        if (typeof this.mouse.press.on === 'function') this.mouse.press.on.apply(this);
+                    } else {
+                        if (typeof this.mouse.drag.function === 'function') this.mouse.drag.function.apply(this);
+                        this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
+                        this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
+                    }
+                } else {
+                if (this.mouse.drag.active)  this.mouse.drag.start = false;
+                }
+                // check out if was repeated inside
+                if (TouchInput.isRepeated())
+                    if (typeof this.mouse.repeat.on === 'function') this.mouse.repeat.on.apply(this);
             } else {
-               if (this.mouse.drag.active)  this.mouse.drag.start = false;
+                // function that will be call
+                if (typeof this.mouse.out === 'function') this.mouse.out.apply(this);
+                // check out if was triggered inside
+                if (TouchInput.isTriggered()) 
+                    if (typeof this.mouse.trigger.off === 'function') this.mouse.trigger.off.apply(this);
+                // check out if was pressed inside
+                if (TouchInput.isLongPressed())
+                    if (typeof this.mouse.press.off === 'function') this.mouse.press.off.apply(this);
+                // check out if was repeated inside
+                if (TouchInput.isRepeated())
+                    if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
             }
-            // check out if was repeated inside
-            if (TouchInput.isRepeated())
-                if (typeof this.mouse.repeat.on === 'function') this.mouse.repeat.on.apply(this);
-        } else {
-            // function that will be call
-            if (typeof this.mouse.out === 'function') this.mouse.out.apply(this);
-            // check out if was triggered inside
-            if (TouchInput.isTriggered()) 
-                if (typeof this.mouse.trigger.off === 'function') this.mouse.trigger.off.apply(this);
-            // check out if was pressed inside
-            if (TouchInput.isLongPressed())
-                if (typeof this.mouse.press.off === 'function') this.mouse.press.off.apply(this);
-            // check out if was repeated inside
-            if (TouchInput.isRepeated())
-                if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
         }
     }
     // =============================================================================
-    // [Movie] :movie
+    // [:tool]
     // =============================================================================
-    Movie.prototype = Object.create(Movie.prototype);
-    Movie.prototype.constructor = Movie;
-    // =============================================================================
-    // initialize
-    // =============================================================================
-    Movie.prototype.initialize = function(filename, callBack, idcont) {
-        // setup
-        this._filename = filename; // Game_Interpreter.prototype.videoFileExt()
-        this._loaded = false;
-        this._callBack = callBack;
-        this._afterUpdate = null;
-        this._preUpdate = null;
-        // sprite
-        this.sprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
-        // addchild
-        if (idcont === undefined) idcont = "movie";
-        SceneManager._scene.addChild(this.sprite);
-        // loader
-        let loader = new PIXI.loaders.Loader();
-        loader.add({
-            name: 'movie',
-            url: this._filename,
-        }, function() {
-            // complete load
-            this._texture = PIXI.Texture.fromVideo(this._filename);
-            this._loaded = true;
-            this.sprite.texture = this._texture;
-            // updated the texture
-            this.sprite.update = function update () { 
-                this._texture.update(); 
-            }
-            // eternal loop
-            this.sprite.texture.baseTexture.source.loop = true;
-            // callback
-            if (typeof this._callBack === 'function')  this._callBack.apply(this, arguments);
-        }.bind(this));
-        loader.load();
+    /**
+     * @desc create sprite based on picture
+     * @param {class} texture PIXI.Texture: texture that you can get using $.Pixi.Manager.cache
+     * @param {object} hash setup elements 'see $.SpriteObject'
+     * @param {function} callback setup callback function
+     * @return {class} return $.SpriteObject class.
+     */
+    $.Picture = function(texture, hash, callback) {
+        hash = hash || {};
+        hash.type = "picture";
+        hash.texture = texture;
+        return (new $.SpriteObject(hash, callback));
     }
-    // =============================================================================
-    // [auto]
-    // =============================================================================
-    Movie.prototype.auto = function() {
-        this.sprite.width = Graphics.boxWidth;
-        this.sprite.height = Graphics.boxHeight;
-    }
-    // =============================================================================
-    // dispose
-    // =============================================================================
-    Movie.prototype.dispose = function() {
-        this.sprite.texture.baseTexture.source.pause();
-        this.sprite.update = null;
-        this.sprite.destroy(true);
-        this._texture.destroy();
-    }
-    // =============================================================================
-    // update
-    // =============================================================================
-    Movie.prototype.update = function () {
-        // preUpdate
-        if (typeof this._preUpdate === 'function')  this._preUpdate.apply(this, arguments);
-        if (this._loaded) {
-            //Graphics.render(this.sprite);
-            // afterUpdate
-            if (typeof this._afterUpdate === 'function')  this._afterUpdate.apply(this, arguments);
-        }
-    }
-    // ============================================================================= 
-    // [TouchInput] :touch
-    // =============================================================================
-    // =============================================================================
-    // [_onMouseMove]
-    // remove the limit to check out the position
-    // =============================================================================
-    TouchInput._onMouseMove = function(event) {
-        var x = Graphics.pageToCanvasX(event.pageX);
-        var y = Graphics.pageToCanvasY(event.pageY);
-        this._onMove(x, y);
-    };
-    // ============================================================================= 
-    // [SceneManager] :scene_manager
-    // ============================================================================= 
-    // ============================================================================= 
-    // [isScene] : check out if the current scene is (?)
-    //      name : name of scene
-    // ============================================================================= 
-    SceneManager.prototype.isScene = function(name) {
-        return SceneManager._scene && SceneManager._scene.constructor === name;
-    }
-    // ============================================================================= 
-    // [Scene_Base] :scene_base
-    // ============================================================================= 
-    // ============================================================================= 
-    // [start]
-    // ============================================================================= 
-    var _aliasSta_SB = Scene_Base.prototype.start;
-    Scene_Base.prototype.start = function() {
-        $.Pixi.data.loadRequestedTextures();
-        _aliasSta_SB.call(this);
-    }
-    // ============================================================================= 
-    // [update]
-    // ============================================================================= 
-    var _aliasUpdt_SB = Scene_Base.prototype.update;
-    Scene_Base.prototype.update = function() {
-        _aliasUpdt_SB.call(this);
-        $.Pixi.data.update();
-    }
-    // ============================================================================= 
-    // [terminate]
-    // ============================================================================= 
-    var _aliasTerm_SB = Scene_Base.prototype.terminate;
-    Scene_Base.prototype.terminate = function() {
-        $.Pixi.data.dispose();
-        _aliasTerm_SB.call(this);
-    }
-    // ============================================================================= 
-    // [EasyTool] :tool :end
-    // ============================================================================= 
-    // add on picture
-    $.img = function(hash, callback) {
-        $.Pixi.data.add(new Picture(hash.filename, callback, hash.id), hash.index);
-    }
-    // add on text
-    $.text = function(hash, callback) {
-        $.Pixi.data.add(new Text(hash.text, callback, hash.id), hash.index);
-    }
-    // add on movie
-    $.movie = function(hash, callback) {
-        $.Pixi.data.add(new Movie(hash.filename, callback, hash.id), hash.index)
-    }
-    // add on button
-    $.button = function(hash, callback) {
-        $.Pixi.data.add(new Button(hash, callback, hash.id), hash.index);
-    }
-    // get data from haya.pixi.data
-    $.pdata = function(index) { return $.Pixi.data.data[index]; }
-    // get if data is loaded
-    $.Pixi.loaded = function(index) { return $.Pixi.data.data[index]._loaded; }
-    // loadJson
-    $.json = function(filename, callback, name) {
-         let loader = new PIXI.loaders.Loader();
-         loader 
-             .add(name, filename)
-             .load(function(ld, rs) {
-                 callback (!rs[name] ? false : rs[name].data);
-             });
-     }
-    // loader Pixi function
-    $.load = function(filename, callback, name) {
-        name = name || 'load'
-        let loader = new PIXI.loaders.Loader();
-        loader 
-            .add(name, filename)
-            .load(function(rload, resource) {
-                callback(resource[name]);
-            });
+    /**
+     * @desc create text spriteObject
+     * @param {string} text that will be the first value to display
+     * @param {object} hash setup elements 'see $.SpriteObject'
+     * @param {function} callback setup callback function
+     * @return {class} return $.SpriteObject class.
+     */
+    $.Text = function(text, hash, callback) {
+        hash = hash || {};
+        hash.type = "text";
+        hash.text = text;
+        return (new $.SpriteObject(hash, callback));
     }
 })(Haya);
+Imported["Haya"] = true;
