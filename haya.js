@@ -3,14 +3,14 @@
 // Plug-in    : Haya Core
 // Author     : Dax Soft | Kvothe
 // Website    : www.dax-soft.weebly.com
-// Version    : 0.2.1
+// Version    : 0.2.2
 // Special thanks for Fehu (Alisson)
 // ================================================================================
 
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc [0.2.1] Essential core for my script to MV.
+ * @plugindesc [0.2.2] Essential core for my script to MV.
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
@@ -28,8 +28,6 @@ Ctrl+F [locate]:
     :sceneManager
     :piximanager
     :sprite
-    :gui
-        :button
     :tool
 ================================================================================ */
 var Imported = Imported || new Object();
@@ -37,7 +35,7 @@ var Haya = new Object();
 // =================================================================================
 // [Global function] :global
 // =================================================================================
-function print(content) { console.log(content) };
+function print(value) { console.log(value) };
 // =================================================================================
 // [Number: extension] :number
 // =================================================================================
@@ -278,6 +276,12 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     $.Utils.hasValue = function(variable) { return (variable !== undefined || variable !== null); } 
     /**
+     * @desc check out if is invalid
+     * @param {any}
+     * @return {boolean}
+     */
+    $.Utils.invalid = function(object) { return (typeof object === 'undefined' || typeof object === 'null') }
+    /**
      * @desc get index by propriety of object
      * @param {object} object that will be checked
      * @param {string} propriety that will be checked
@@ -306,6 +310,41 @@ if (typeof String.prototype.clean === 'undefined') {
     $.Utils.predObject = function(object, current) {
         var pred  = (Object.keys(object).indexOf(current) - 1) % Object.keys(object).length;
         return object[Object.keys(object)[pred]];
+    }
+    /**
+     * @desc merge into 'object' another 'object' and return to a new Object
+     * @param {object} object that will receive the merge
+     * @param {object} mobject that will be merged
+     * @param {boolean} replace replace elements that 'object' have. Default is [true]
+     * @return {obejct}
+     */
+    $.Utils.merge = function(object, mobject, replace) {
+        // replace 
+        replace = replace || true;
+        // new object
+        var nobject = new Object(); 
+        // check out if object and mobject is Object
+        if (!$.Utils.isObject(object) || !$.Utils.isObject(mobject)) return nobject;
+        // merge function
+        Object.keys(object).map(function (keyname) { // each keyname from mobject
+            // check out if mobject has the keyname
+            if (mobject.hasOwnProperty(keyname)) {
+                // check out if the value is a Object
+                if ($.Utils.isObject(mobject[keyname])) {
+                    nobject[keyname] = $.Utils.merge(
+                        object[keyname],
+                        $.Utils.merge(object[keyname], mobject[keyname], replace),
+                        replace	
+                    );
+                } else {
+                    nobject[keyname] = replace ? mobject[keyname] : object[keyname];
+                }
+            } else {
+                nobject[keyname] = object[keyname]
+            }
+        })
+        // return to new object based on 'object' and 'mobejct'
+        return nobject;
     }
     // =============================================================================
     // [DMath] :dmath
