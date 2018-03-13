@@ -1,444 +1,417 @@
-// ============================================================================
-// Plug-in: UltimateSensorEvent.js <> Haya System
-// Version at 1.5.0
-// Author: Dax Soft 
-// Support: www.dax-soft.weebly.com
-// ============================================================================
-// - info
+
+/**
+ * @file Ulse | Ultimate Sensor Event
+ * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
+ * @version 1.6.0
+ * @license https://dax-soft.weebly.com/legal.html
+ */
+
 /*:
- * @author Dax Soft 
+ * @author Dax Soft  | Kvothe
  * 
- * @plugindesc System of sensor. Used to make the npc detect your presence — of the player.
- * Very useful to games of the stealth: In that the player must keep your presence hidden, to continue.
- * The current system, contains more than twenty forms of detection of the player presence. 
- * Now, you can do a Sensor between Events.
+ * @plugindesc Ultimate Sensor Event [1.6.0]
  * 
  * @help
- * Contact:
- *     website: http://www.dax-soft.weebly.com
+ * System of sensor. Used to make the npc detect your presence — of the player.
+ * Very useful to stealth games: In which the player must keep your presence hidden,
+ * to continue.
+ * Support sensor between events.
  * Check out the tutorial at http://tutorial-dax.weebly.com/ulse.html
  * ===========================================================================
 */
-var Imported = Imported || {};
-var Haya = Haya || {};
-Haya.Ulse = {};
-// Script:
-(function($){
+
+/**
+ * @var Imported
+ * @desc valid import 
+ */
+Imported = Imported || {};
+
+/**
+ * @var Ulse
+ * @desc global variable of script
+ */
+var Ulse = Ulse || {}
+Ulse.version = 1.6;
+
+(function ($) {
 'use strict';
-    // get the variable from a event id
-    $.eventMap = function(eventId, defaultEventID) {
-        return $gameMap.event(eventId == null ? Number(defaultEventID) : Number(eventId));
+    // ============================================================================
+    /**
+     * :gameCharacter
+     * @class Game_Character
+     * @classdesc addons toward this class
+     * @memberof Game_CharacterBase
+     */
+
+    /**
+     * @desc check out if the target of sensor is valid
+     * @param {Game_Character} target
+     * @returns {boolean}
+     */
+    Game_Character.prototype.sensorTargetValid = function(target) {
+        if (target === undefined || target === null) return false;
+        if (!(target instanceof Game_Character)) return false;
+        return true;
     }
-    // sensor by area:
-    Game_Interpreter.prototype.uArea = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            _swtich = ( ( Math.abs(event2.x - event.x) + Math.abs(event2.y - event.y) ) <= Math.abs(distance) );
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            _swtich = ( ( Math.abs($gamePlayer.x - event.x) + Math.abs($gamePlayer.y - event.y) ) <= Math.abs(distance) );
-        }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich); 
-        return _swtich;
-    } 
-    // sensor Above
-    Game_Interpreter.prototype.uAbove = function(id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            _swtich = (event2.x == event.x && event2.y == event.y);
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            _swtich = ($gamePlayer.x == event.x && $gamePlayer.y == event.y);
-        }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
+
+    /**
+     * @desc Check out by square area
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean}
+     */
+    Game_Character.prototype.sensorArea = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // return
+        return ( (Math.abs(target._x - this._x) + Math.abs(target._y - this._y)) <= Math.abs(range) );
     }
-    // sRight
-    Game_Interpreter.prototype.uRight = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            if (event2.y == event.y) {
-                for (var i = event.x + 1; i < event.x + Math.abs(distance); i++) {
-                    if (!$gameMap.isPassable(i, event.y, 6)) break; 
-                     if (event2.x == i) {
-                         _swtich = true;
-                     }
-                }
-            }
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            if ($gamePlayer.y == event.y) {
-                for (var i = event.x + 1; i < event.x + Math.abs(distance); i++) {
-                    if (!$gameMap.isPassable(i, event.y, 6)) break; 
-                      if ($gamePlayer.x == i) {
-                          _swtich = true;
-                      }
-                }
-               }
-        }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
+
+    /**
+     * @description Check out if the targe is on (above)
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorOn = function(target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // return
+        return ( this.pos(target.x, target.y) );
     }
-    // sLeft
-    Game_Interpreter.prototype.uLeft = function(distance, id, sid) {
-            var _swtich = _swtich || false;
-            if (Array.isArray(id)) {
-                var event = event || $.eventMap(id[0], this._eventId);
-                var event2 = event2 || $.eventMap(id[1], this._eventId);
-                if (event2.y == event.y) {
-                    for (var i = event.x + 1; i < event.x + Math.abs(distance); i++) {
-                        if (!$gameMap.isPassable(i, event.y, 6)) break; 
-                            if (event2.x == i - distance) {
-                                _swtich = true;
-                            }
-                    }
-                }
-            } else {
-                var event = event || $.eventMap(id, this._eventId);
-                if ($gamePlayer.y == event.y) {
-                    for (var i = event.x + 1; i < event.x + Math.abs(distance); i++) {
-                        if (!$gameMap.isPassable(i, event.y, 6)) break; 
-                            if ($gamePlayer.x == i - distance) {
-                                _swtich = true;
-                            }
-                    }
-                }
-            }
-            if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-            return _swtich;
-    }
-    // sFront
-    Game_Interpreter.prototype.uFront = function(distance, id, sid) {
-            var _swtich = _swtich || false;
-            if (Array.isArray(id)) {
-                var event = event || $.eventMap(id[0], this._eventId);
-                var event2 = event2 || $.eventMap(id[1], this._eventId);
-                if (event2.x == event.x) {
-                    for (var i = event.y; i > event.y - (distance-1); i--) {
-                        if ($gameMap.isPassable(event.x, i, 8)) {
-                                if (event2.y == i) {
-                                    _swtich = true;
-                                }
-                        }
-                    }
-                }
-            } else {
-                var event = event || $.eventMap(id, this._eventId);
-                if ($gamePlayer.x == event.x) {
-                    for (var i = event.y; i > event.y - (distance-1); i--) {
-                        if ($gameMap.isPassable(event.x, i, 8)) {
-                                if ($gamePlayer.y == i) {
-                                    _swtich = true;
-                                }
-                        }
-                    }
-                }
-            }
-            if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-            return _swtich;
-    }
-    // sAgo
-    Game_Interpreter.prototype.uAgo = function(distance, id, sid) {
-            var _swtich = _swtich || false;
-            if (Array.isArray(id)) {
-                var event = event || $.eventMap(id[0], this._eventId);
-                var event2 = event2 || $.eventMap(id[1], this._eventId);
-                if (event2.x == event.x) {
-                    for (var i = event.y; i > event.y - (distance); i--) {
-                        if ($gameMap.isPassable(event.x, i, 8)) {
-                            if (event2.y == (i+(distance))-1) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                }
-            } else {
-                var event = event || $.eventMap(id, this._eventId);
-                if ($gamePlayer.x == event.x) {
-                    for (var i = event.y; i > event.y - (distance); i--) {
-                        if ($gameMap.isPassable(event.x, i, 8)) {
-                            if ($gamePlayer.y == (i+(distance))-1) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                }
-            }
-            if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-            return _swtich;
-    }
-    // uCross
-    Game_Interpreter.prototype.uCross = function(distance, id, sid) {
-            return (  this.uAgo(distance, id, sid) || this.uFront(distance, id, sid) ||
-                    this.uRight(distance, id, sid) || this.uLeft(distance, id, sid));
-    }
-    // uVision
-    Game_Interpreter.prototype.uVision = function(distance, id, sid) {
-        var event = event || $.eventMap(Array.isArray(id) ? id[0] : id, this._eventId);
-        switch (event.direction()) {
-            case 2:
-                return this.uAgo(distance, id, sid);
-            case 4:
-                return this.uLeft(distance, id, sid);
-            case 6:
-                return this.uRight(distance, id, sid);
-            case 8:
-                return this.uFront(distance, id, sid);
-            default:
-                break;
-        }
-    }
-    // uBehind
-    Game_Interpreter.prototype.uBehind = function(distance, id, sid) {
-        var event = event || $.eventMap(Array.isArray(id) ? id[0] : id, this._eventId);
-        switch (event.direction()) {
-            case 8:
-                return this.uAgo(distance, id, sid);
-            case 6:
-                return this.uLeft(distance, id, sid);
-            case 4:
-                return this.uRight(distance, id, sid);
-            case 2:
-                return this.uFront(distance, id, sid);
-            default:
-                break;
-        }
-    }
-    // vLeft
-    Game_Interpreter.prototype.vLeft = function(distance, id, sid) {
-        var event = event || $.eventMap(Array.isArray(id) ? id[0] : id, this._eventId);
-        switch (event.direction()) {
-            case 4:
-                return this.uAgo(distance, id, sid);
-            case 8:
-                return this.uLeft(distance, id, sid);
-            case 2:
-                return this.uRight(distance, id, sid);
-            case 6:
-                return this.uFront(distance, id, sid);
-            default:
-                break;
-        }
-    }
-    // vRight
-    Game_Interpreter.prototype.vRight = function(distance, id, sid) {
-        var event = event || $.eventMap(Array.isArray(id) ? id[0] : id, this._eventId);
-        switch (event.direction()) {
-            case 4:
-                return this.uAgo(distance, id, sid);
-            case 2:
-                return this.uLeft(distance, id, sid);
-            case 8:
-                return this.uRight(distance, id, sid);
-            case 6:
-                return this.uFront(distance, id, sid);
-            default:
-                break;
-        }
-    }
-    // dLeft
-    Game_Interpreter.prototype.dLeft = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-               if ( (event2.x == (event.x - i)) && (event2.y == (event.y - i)) ) {
-                    _swtich = true;
-               }
-            }
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                if ( ($gamePlayer.x == (event.x - i)) && ($gamePlayer.y == (event.y - i)) ) {
-                    _swtich = true;
-                }
+
+    /**
+     * @desc Sensor by a right line. ​Static line: would fix independent of 
+     * the direction that the event is.
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean}
+     */
+    Game_Character.prototype.sensorRight = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        if (target._y === this._y) {
+            for (let x = this._x; x < (this._x + Math.floor(range)); x++) {
+                if (!(this.isMapPassable(x, this._y, 6))) break;
+                if (target._x === x) _switch = true;
             }
         }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
+        // return
+        return _switch;
     }
-    // dRight
-    Game_Interpreter.prototype.dRight = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                if ( (event2.x == (event.x + i)) && (event2.y == (event.y - i)) ) {
-                    _swtich = true;
-                }
-            }
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                 if ( ($gamePlayer.x == (event.x + i)) && ($gamePlayer.y == (event.y - i)) ) {
-                     _swtich = true;
-                 }
-            }
-        }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
-    }
-    // diLeft
-    Game_Interpreter.prototype.diLeft = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                if ( (event2.x == (event.x - i)) && (event2.y == (event.y + i)) ) {
-                    _swtich = true;
-                }
-            }
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            for (var i = 0; i <= distance; i++) {
-                if ( ($gamePlayer.x == (event.x - i)) && ($gamePlayer.y == (event.y + i)) ) {
-                    _swtich = true;
-                }
+
+    /**
+     * @desc Sensor by a left line. ​Static line: would fix independent of 
+     * the direction that the event is.
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean}
+     */
+    Game_Character.prototype.sensorLeft = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        if (target._y === this._y) {
+            for (let x = this._x; x > (this._x - Math.floor(range)); x--) {
+                if (!(this.isMapPassable(x, this._y, 4))) break;
+                if (target._x === x) _switch = true;
             }
         }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
+        // return
+        return _switch;
     }
-     // diRight
-     Game_Interpreter.prototype.diRight = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) {
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                if ( (event2.x == (event.x + i)) && (event2.y == (event.y + i)) ) {
-                    _swtich = true;
-                }
-            }
-        } else {
-            var event = event || $.eventMap(id, this._eventId);
-            for (var i = 0; i < distance+1; i++) {
-                if ( ($gamePlayer.x == (event.x + i)) && ($gamePlayer.y == (event.y + i)) ) {
-                    _swtich = true;
-                }
-            }
-        }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
-    }
-    // uDiagonal
-    Game_Interpreter.prototype.uDiagonal = function(distance, id, sid) {
-        return ( this.diLeft(distance, id, sid) || this.diRight(distance, id, sid) ||
-                 this.dLeft(distance, id, sid)  || this.dRight(distance, id, sid));
-    }
-    // vDiagonal
-    Game_Interpreter.prototype.vDiagonal = function(distance, id, sid) {
-        var event = event || $.eventMap(Array.isArray(id) ? id[0] : id, this._eventId);
-        switch (event.direction()) {
-            case 2:
-                return (this.diLeft(distance, id, sid) || this.diRight(distance, id, sid));
-            case 4:
-                return (this.dLeft(distance, id, sid) || this.diLeft(distance, id, sid));
-            case 6:
-                return (this.diRight(distance, id, sid) || this.dRight(distance, id, sid));
-            case 8:
-                return (this.dLeft(distance, id, sid) || this.dRight(distance, id, sid));
-            default:
-                break;
-        }
-    }
-    // uCircle
-    Game_Interpreter.prototype.uCircle = function(distance, id, sid) {
-        var distance = distance < 2 ? 2 : distance;
-        return ( this.uDiagonal(distance - 1, id, sid) || this.uCross(distance, id, sid));
-    }
-    // uCubic
-    Game_Interpreter.prototype.uCubic = function(distance, id, sid) {
-        var _swtich = _swtich || false;
-        if (Array.isArray(id)) { // event
-            var event = event || $.eventMap(id[0], this._eventId);
-            var event2 = event2 || $.eventMap(id[1], this._eventId);
-            switch (event.direction()) {
-                case 2:
-                    for (var x = event.x - (distance - 2); x < event.x + (distance - 2); x++) {
-                        for (var y = event.y; y < event.y + distance; y++) {
-                            if (event2.x == x && event2.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 4:
-                    for (var i = 0; i < distance + 1; i++) {
-                        for (var y = event.y - (distance - 2); y < event.y + (distance - 2); y++) {
-                            if (event2.x == event.x - i && event2.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 6:
-                    for (var i = 0; i < distance + 1; i++) {
-                        for (var y = event.y - (distance - 2); y < event.y + (distance - 2); y++) {
-                            if (event2.x == event.x + i && event2.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 8:
-                    for (var x = event.x - (distance - 2); x < event.x + (distance - 2); x++) {
-                        for (var y = event.y; y > event.y - distance; y--) {
-                            if (event2.x == x && event2.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                default:
-                    _swtich = false;
-            }
-        } else { // player
-            var event = event || $.eventMap(id, this._eventId);
-            switch (event.direction()) {
-                case 2:
-                    for (var x = event.x - (distance - 2); x < event.x + (distance - 2); x++) {
-                        for (var y = event.y; y < event.y + distance; y++) {
-                            if ($gamePlayer.x == x && $gamePlayer.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 4:
-                    for (var i = 0; i < distance + 1; i++) {
-                        for (var y = event.y - (distance - 2); y < event.y + (distance - 2); y++) {
-                            if ($gamePlayer.x == event.x - i && $gamePlayer.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 6:
-                    for (var i = 0; i < distance + 1; i++) {
-                        for (var y = event.y - (distance - 2); y < event.y + (distance - 2); y++) {
-                            if ($gamePlayer.x == event.x + i && $gamePlayer.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                case 8:
-                    for (var x = event.x - (distance - 2); x < event.x + (distance - 2); x++) {
-                        for (var y = event.y; y > event.y - distance; y--) {
-                            if ($gamePlayer.x == x && $gamePlayer.y == y) {
-                                _swtich = true;
-                            }
-                        }
-                    }
-                default:
-                    _swtich = false;
+
+    /**
+     * @desc Sensor by a front line. ​Static line: would fix independent of 
+     * the direction that the event is.
+     * @param {number} range 
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorFront = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        if (target._x === this._x) {
+            for (let y = this._y; y < (this._x + Math.floor(range)); y++) {
+                if (!(this.isMapPassable(this._x, y, 2))) break;
+                if (target._y === y) _switch = true;
             }
         }
-        if (Number.isInteger(sid)) $gameSwitch.setValue(sid, _swtich);
-        return _swtich;
+        // return
+        return _switch;
     }
-})(Haya.Ulse);
-Imported.Ulse = true;
+
+    /**
+     * @description Sensor by a back line. ​Static line: would fix independent of 
+     * the direction that the event is.
+     * @param {number} range 
+     * @param {Game_Character} target 
+     */
+    Game_Character.prototype.sensorAgo = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        if (target._x === this._x) {
+            for (let y = this._y; y > (this._y - Math.floor(range)); y--) {
+                if (!(this.isMapPassable(this._x, y, 8))) break;
+                if (target._y === y) _switch = true;
+            }
+        }
+        // return
+        return _switch;
+    }
+
+    /**
+     * @description Sensor as cross form (+ symbol). ​Static line:
+     * would fix independent of the direction that the event is.
+     * @param {number} range 
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorCross = function(range, target) {
+        // return if any is true
+        return (
+            this.sensorAgo(range, target)   || 
+            this.sensorFront(range, target) ||
+            this.sensorLeft(range, target)  ||
+            this.sensorRight(range, target)
+        );
+    }
+
+    /**
+     * @description Sensor just on vision of the event.  In straight line
+     * @param {number} range 
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorVision = function(range, target) {
+        switch (this.direction()) {
+            case 2: return (this.sensorFront(range, target));
+            case 4: return (this.sensorLeft(range, target));
+            case 6: return (this.sensorRight(range, target));
+            case 8: return (this.sensorAgo(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @desc Sensor just on behind of the event (watch your backs). In straight line
+     * @param {number} range 
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorBack = function(range, target) {
+        switch (this.direction()) {
+            case 8: return (this.sensorFront(range, target));
+            case 6: return (this.sensorLeft(range, target));
+            case 4: return (this.sensorRight(range, target));
+            case 2: return (this.sensorAgo(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @description Sensor just on left of the event.  In straight line
+     * @param {number} range 
+     * @param {Game_Character} target
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorLeftArm = function(range, target) {
+        switch (this.direction()) {
+            case 4: return (this.sensorFront(range, target));
+            case 8: return (this.sensorLeft(range, target));
+            case 2: return (this.sensorRight(range, target));
+            case 6: return (this.sensorAgo(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @desc Sensor just on right of the event.  In straight line
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorRightArm = function(range, target) {
+        switch (this.direction()) {
+            case 4: return (this.sensorFront(range, target));
+            case 2: return (this.sensorLeft(range, target));
+            case 8: return (this.sensorRight(range, target));
+            case 6: return (this.sensorAgo(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @desc Sensor ​on the top-left. Diagonal
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorTopLeft = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        for (let i = 0; i < Math.floor(range) + 1; i++) {
+            if ( (target._x === (this._x - i)) && (target._y === (this._y - i)) ) _switch = true;
+        }
+        // return
+        return _switch;
+    }
+
+    /**
+     * @desc Sensor ​on the top-right. Diagonal
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorTopRight = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        for (let i = 0; i < Math.floor(range) + 1; i++) {
+            if ( (target._x === (this._x + i)) && (target._y === (this._y - i)) ) _switch = true;
+        }
+        // return
+        return _switch;
+    }
+
+    /**
+     * @desc Sensor ​on the bottom-right. Diagonal
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorBottomRight = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        for (let i = 0; i < Math.floor(range) + 1; i++) {
+            if ( (target._x === (this._x + i)) && (target._y === (this._y + i)) ) _switch = true;
+        }
+        // return
+        return _switch;
+    }
+
+    /**
+     * @desc Sensor ​on the bottom-right. Diagonal
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorBottomLeft = function(range, target) {
+        // check out target
+        if (this.sensorTargetValid(target) === false) return false;
+        // variable
+        var _switch = _switch || false;
+        // check out
+        for (let i = 0; i < Math.floor(range) + 1; i++) {
+            if ( (target._x === (this._x - i)) && (target._y === (this._y + i)) ) _switch = true;
+        }
+        // return
+        return _switch;
+    }
+
+    /**
+     * @desc Sensor as cross form (x symbol). Sensor on all diagonal sides
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorDiagonal = function(range, target) {
+        // return if any is true
+        return (
+            this.sensorTopLeft(range, target)       || 
+            this.sensorTopRight(range, target)      ||
+            this.sensorBottomLeft(range, target)    ||
+            this.sensorBottomRight(range, target)
+        );
+    }
+
+    /**
+     * @desc Sensor just on vision of the event. In DIAGONAL side
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorDiagonalVision = function(range, target) {
+        switch (this.direction()) {
+            case 2: return (this.sensorBottomLeft(range, target)    || this.sensorBottomRight(range, target));
+            case 4: return (this.sensorTopLeft(range, target)       || this.sensorBottomLeft(range, target));
+            case 6: return (this.sensorBottomRight(range, target)   || this.sensorTopRight(range, target));
+            case 8: return (this.sensorTopLeft(range, target)       || this.sensorTopRight(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @desc Sensor just on backs (behind) of the event. In DIAGONAL side
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorDiagonalBack = function(range, target) {
+        switch (this.direction()) {
+            case 8: return (this.sensorBottomLeft(range, target)    || this.sensorBottomRight(range, target));
+            case 6: return (this.sensorTopLeft(range, target)       || this.sensorBottomLeft(range, target));
+            case 4: return (this.sensorBottomRight(range, target)   || this.sensorTopRight(range, target));
+            case 2: return (this.sensorTopLeft(range, target)       || this.sensorTopRight(range, target));
+            default: break;
+        }
+    }
+
+    /**
+     * @desc Sensor on circle form.
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorCircle = function(range, target) {
+        range = Math.floor(range) < 2 ? 2 : Math.floor(range);
+        return (this.sensorDiagonal(range - 1, target) || this.sensorCross(range, target));
+    }
+
+    /**
+     * @desc Sensor on full field of vision
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorFullVision = function(range, target) {
+        range = Math.floor(range) < 2 ? 2 : Math.floor(range);
+        return (
+            this.sensorDiagonalVision(range, target)        ||
+            this.sensorVision(range, target)
+        );
+    }
+
+    /**
+     * @desc Sensor on full field of vision
+     * @param {number} range 
+     * @param {Game_Character} target 
+     * @returns {boolean} 
+     */
+    Game_Character.prototype.sensorFullBack = function(range, target) {
+        range = Math.floor(range) < 2 ? 2 : Math.floor(range);
+        return (
+            this.sensorDiagonalBack(range, target)        ||
+            this.sensorBack(range, target)
+        );
+    }
+})(Ulse);
+Imported["Ulse"] = true;
