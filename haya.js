@@ -1,16 +1,16 @@
+/**
+ * @file Haya - Core
+ * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
+ * @version 0.2.3
+ * @license https://dax-soft.weebly.com/legal.html
+ * Special thanks for Fehu (Alisson)
+ */
 
-// ================================================================================
-// Plug-in    : Haya Core
-// Author     : Dax Soft | Kvothe
-// Website    : www.dax-soft.weebly.com
-// Version    : 0.2.2
-// Special thanks for Fehu (Alisson)
-// ================================================================================
 
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc [0.2.2] Essential core for my script to MV.
+ * @plugindesc Essential core for my script to MV. [0.2.3]
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
@@ -117,8 +117,12 @@ if (typeof String.prototype.clean === 'undefined') {
     $.Pixi = new Object();
     $.Pixi.TextureCache = new Object();
     // =============================================================================
-    // [FileIO] :fileio
-    // =============================================================================
+    /**
+     * :fileio
+     * @function FileIO
+     * @memberof Haya
+     * @desc manager for files
+     */
     $.FileIO = function() { throw new Error('This is a static class'); }
     /**
      * @param {string} filepath local filepath to file | url;
@@ -216,8 +220,12 @@ if (typeof String.prototype.clean === 'undefined') {
         return files;
     }
     // =============================================================================
-    // [Utils] :utils
-    // =============================================================================
+    /**
+     * :util
+     * @function Utils
+     * @memberof Haya
+     * @desc useful tools
+     */
     $.Utils = function() { throw new Error('This is a static class'); }
     /**
      * @desc check out if is object
@@ -347,9 +355,18 @@ if (typeof String.prototype.clean === 'undefined') {
         return nobject;
     }
     // =============================================================================
-    // [DMath] :dmath
-    // =============================================================================
+    /**
+     * :dmath
+     * @function DMath
+     * @memberof Haya
+     * @desc tools for calcs
+     */
     $.DMath = function() { throw new Error('This is a static class'); }
+    /**
+     * @function Position
+     * @memberof DMath
+     * @desc tools for positions calcs
+     */
     $.DMath.Position = function() { throw new Error('This is a static class'); }
     /**
      * @desc turn value to percent by max
@@ -495,8 +512,12 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     SceneManager.prototype.isScene = function(name) { return SceneManager._scene && SceneManager._scene.constructor === name; }
     // ============================================================================= 
-    // [PixiManager] :piximanager
-    // ============================================================================= 
+    /**
+     * :piximanager
+     * @function Pixi.Manager
+     * @memberof Haya.Pixi
+     * @desc manager for some functios toward PIXI
+     */
     $.Pixi.Manager = function() { throw new Error('This is a static class'); }
     /**
      * @desc load texture using PIXI
@@ -541,8 +562,13 @@ if (typeof String.prototype.clean === 'undefined') {
         }
     }
     // =============================================================================
-    // [:sprite]
-    // =============================================================================
+    /**
+     * :sprite
+     * @function SpriteObject
+     * @class SpriteObject
+     * @memberof PIXI.Container
+     * @description make more easier display picture or text toward scene
+     */
     $.SpriteObject = class extends PIXI.Container {
         /**
          * @param {object} hash that contains
@@ -725,8 +751,12 @@ if (typeof String.prototype.clean === 'undefined') {
         }
     }
     // =============================================================================
-    // [:tool]
-    // =============================================================================
+    /**
+     * :tool
+     * @description shortcuts toward some functions
+     * @var Haya
+     */
+    
     /**
      * @desc create sprite based on picture
      * @param {class} texture PIXI.Texture: texture that you can get using $.Pixi.Manager.cache
