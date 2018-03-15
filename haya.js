@@ -1,3 +1,5 @@
+
+
 /**
  * @file Haya - Core
  * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
@@ -292,7 +294,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @description list of download
      */
     $.FileIO.Download.list = [];
-    $.FileIO.Download.load = [];
+    $.FileIO.Download.index = 0;
     /**
      * @description set download list
      * @param {array} array Set using Object
@@ -308,10 +310,7 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     $.FileIO.Download.set = function(array) {
         $.FileIO.Download.list = array;
-        var i = array.length;
-        while (i--) {
-            $.FileIO.Download.load[i] = false;
-        }
+        $.FileIO.Download.index = 0;
     }
     /**
      * @description download the file
@@ -323,9 +322,10 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {number} index
      */
     $.FileIO.Download.download = function(url, dest, filename, onLoad, onProgress, index) {
+        if (isNaN($.FileIO.Download.index)) return false;
         // return
-        if ($.Utils.invalid(url)) return;
-        if ($.Utils.invalid($.FileIO.Download.list[index])) return;
+        if ($.Utils.invalid(url)) return false;
+        if ($.Utils.invalid($.FileIO.Download.list[index])) return false;
         // Node
         var fs = require('fs');
         var http = null;
@@ -336,7 +336,7 @@ if (typeof String.prototype.clean === 'undefined') {
             http = require('http');
         }
         // return
-        if ($.Utils.invalid(http)) return;
+        if ($.Utils.invalid(http)) return false;
         // filename
         filename = filename || url.split('/').pop();
         // dest
@@ -347,7 +347,6 @@ if (typeof String.prototype.clean === 'undefined') {
         var file = fs.createWriteStream(destination);
         // request
         var request = http.get(url, function (res) {
-            console.log(res);
             res.on('data', function (chunk) {
                 if ($.Utils.isFunction(onProgress)) {
                     onProgress.call(
@@ -359,15 +358,23 @@ if (typeof String.prototype.clean === 'undefined') {
             })
             res.pipe(file);
             file.on('finish', function () {
-                file.close(function () {
-                    $.FileIO.Download.load[index] = true;
-                    onLoad.call(this);
-                });
+                if (this.bytesWritten === parseInt(res.headers['content-length'])) {
+                    file.close(function () {
+                        $.FileIO.Download.list[index] = null;
+                        $.FileIO.Download.list = $.FileIO.Download.list.filter(function(el) { 
+                            return !($.Utils.invalid(el)) 
+                        })
+                        $.FileIO.Download.index++;
+                        $.FileIO.Download.index %= $.FileIO.Download.list.length;
+                        onLoad.call(this);
+                   });
+                }
             })
         }).on('error', function (err) {
             fs.unlink(dest);
             console.warn(err.message);
         })
+        return true;
     }
     /**
      * @description run download of file list
@@ -375,13 +382,28 @@ if (typeof String.prototype.clean === 'undefined') {
     $.FileIO.Download.run = function() {
         // if is empty or invalid
         if ($.Utils.invalid($.FileIO.Download.list)) return false;
-        if ($.Utils.isArray( $.FileIO.Download.list) &&  $.FileIO.Download.list.length < 0) return false;
-        $.FileIO.Download.load.forEach(function (rvalue, index) {
-            if (rvalue === false) {
-                let value = $.FileIO.Download.list[index];
-                $.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
-            }
-        })
+        if (!$.Utils.isArray( $.FileIO.Download.list)) return false;
+        if ($.FileIO.Download.list.length < 1) return;
+        if (isNaN($.FileIO.Download.index)) return false;
+        // index
+        let index = $.FileIO.Download.index;
+        // return
+        if ($.Utils.invalid($.FileIO.Download.list[index])) return false;
+        // value
+        let value = $.FileIO.Download.list[index];
+        // is object
+        if (!$.Utils.isObject(value)) return false;
+        if ($.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index)) {
+            
+        } else {
+            $.FileIO.Download.list[index] = null;
+            $.FileIO.Download.list = $.FileIO.Download.list.filter(function(el) { 
+                return !($.Utils.invalid(el)) 
+            })
+            return false;
+        }
+        // return true
+        return true;
     }
 
     //$.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
