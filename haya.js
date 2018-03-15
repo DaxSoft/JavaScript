@@ -125,6 +125,17 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     $.FileIO = function() { throw new Error('This is a static class'); }
     /**
+     * @function Download
+     * @memberof FileIO
+     * @description tool to download files from web
+     * @example 
+     *  // First, set up the links and destination:
+     *  Haya.FileIO.Download.set([{url: "", dest: "", onLoad: function}...]);
+     *  // Second, call on a update method:
+     *  Haya.FileIO.Download.run();
+     */
+    $.FileIO.Download = function() { throw new Error('This is a static class'); }
+    /**
      * @param {string} filepath local filepath to file | url;
      * @param {string} type MimeType
      * @type {string}
@@ -219,6 +230,161 @@ if (typeof String.prototype.clean === 'undefined') {
         } 
         return files;
     }
+    /**
+     * @description recursive xml reader that transform the elements into Object
+     * @param {XMLDocument} xml 
+     * @returns {object}
+     * @example return 
+     *  {"x": { "y": [ {obj...} ] } }
+     */
+    $.FileIO.objXML = function (xml) {
+        // return case
+        if (Haya.Utils.invalid(xml)) return {};
+        // check out children nodes
+        if ((xml.childNodes.length > 0) && (xml.children.length < 1)) {
+            // if is equal 1
+            if (xml.childNodes.length === 1) return xml.childNodes[0].nodeValue;
+            // data
+            var data = [];
+            // get each node
+            var i = xml.childNodes.length;
+            while (i--) {
+                // item
+                var item = xml.childNodes.item(i);
+                data.push(item.nodeValue);
+            }
+            return data;
+        }
+        // if is XMLDocument
+        if (xml instanceof XMLDocument) {
+            // var
+            var data = {};
+            // children first
+            if (xml.children.length > 0) {
+                // get each children
+                var i = xml.children.length;
+                while (i--) {
+                    // get item
+                    var item = xml.children.item(i);
+                    data[item.nodeName] = data[item.nodeName] || {}; // recursive
+                    data[item.nodeName] = $.FileIO.objXML(item, data)
+                }
+            }
+        } else if (xml instanceof Element) { // if is Element
+            // check out children
+            if (xml.children.length > 0) {
+                // data
+                var data = {}; 
+                // get each children
+                var i = xml.children.length;
+                while (i--) {
+                    // item
+                    var item = xml.children.item(i);
+                    data[item.nodeName] = data[item.nodeName] || [];
+                    data[item.nodeName].push($.FileIO.objXML(item, data));
+                }
+            } 
+        }
+        // return
+        return data;
+    }
+    /**
+     * @description list of download
+     */
+    $.FileIO.Download.list = [];
+    $.FileIO.Download.load = [];
+    /**
+     * @description set download list
+     * @param {array} array Set using Object
+     * @example 
+     * // array param
+     * [{url: "link", dest: "", name: "", onLoad: function, onProgress: function(value)}]
+     * // description
+     * url: "http link";
+     * dest: "local to save"; // on project folder | not defined will be main folder project
+     * name: "filename"; // if is empty or not defined, will be the default filename
+     * onLoad: function(); // will call the function after download
+     * onProgress: function(value, total, chucnk); // return to value of chunk progress (length)
+     */
+    $.FileIO.Download.set = function(array) {
+        $.FileIO.Download.list = array;
+        var i = array.length;
+        while (i--) {
+            $.FileIO.Download.load[i] = false;
+        }
+    }
+    /**
+     * @description download the file
+     * @param {string} url
+     * @param {string} dest
+     * @param {string} filename
+     * @param {function} onLoad | (dest, filename)
+     * @param {function} onProgress | (current (chunk.length), total (content-length), chunk)
+     * @param {number} index
+     */
+    $.FileIO.Download.download = function(url, dest, filename, onLoad, onProgress, index) {
+        // return
+        if ($.Utils.invalid(url)) return;
+        if ($.Utils.invalid($.FileIO.Download.list[index])) return;
+        // Node
+        var fs = require('fs');
+        var http = null;
+        // http
+        if (url.match(/(https)/i)) {
+            http = require('https');
+        } else {
+            http = require('http');
+        }
+        // return
+        if ($.Utils.invalid(http)) return;
+        // filename
+        filename = filename || url.split('/').pop();
+        // dest
+        dest = $.FileIO.local(dest || "");
+        if (!fs.existsSync(dest)) fs.mkdirSync(dest);
+        var destination = dest + "/" + filename;
+        // file
+        var file = fs.createWriteStream(destination);
+        // request
+        var request = http.get(url, function (res) {
+            console.log(res);
+            res.on('data', function (chunk) {
+                if ($.Utils.isFunction(onProgress)) {
+                    onProgress.call(
+                        this, 
+                        chunk.length, 
+                        parseInt(res.headers['content-length']), 
+                    chunk);
+                }
+            })
+            res.pipe(file);
+            file.on('finish', function () {
+                file.close(function () {
+                    $.FileIO.Download.load[index] = true;
+                    onLoad.call(this);
+                });
+            })
+        }).on('error', function (err) {
+            fs.unlink(dest);
+            console.warn(err.message);
+        })
+    }
+    /**
+     * @description run download of file list
+     */
+    $.FileIO.Download.run = function() {
+        // if is empty or invalid
+        if ($.Utils.invalid($.FileIO.Download.list)) return false;
+        if ($.Utils.isArray( $.FileIO.Download.list) &&  $.FileIO.Download.list.length < 0) return false;
+        $.FileIO.Download.load.forEach(function (rvalue, index) {
+            if (rvalue === false) {
+                let value = $.FileIO.Download.list[index];
+                $.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
+            }
+        })
+    }
+
+    //$.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
     // =============================================================================
     /**
      * :util
