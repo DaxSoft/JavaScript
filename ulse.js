@@ -2,21 +2,62 @@
 /**
  * @file Ulse | Ultimate Sensor Event
  * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
- * @version 1.6.0
- * @license https://dax-soft.weebly.com/legal.html
+ * @version 1.6.1
+ * @license Haya <https://dax-soft.weebly.com/legal.html>
  */
 
 /*:
  * @author Dax Soft  | Kvothe
  * 
- * @plugindesc Ultimate Sensor Event [1.6.0]
+ * @plugindesc Ultimate Sensor Event [1.6.1]
  * 
  * @help
  * System of sensor. Used to make the npc detect your presence — of the player.
- * Very useful to stealth games: In which the player must keep your presence hidden,
- * to continue.
+ * Very useful to stealth games: In which the player must keep your presence 
+ * hidden, to continue.
  * Support sensor between events.
- * Check out the tutorial at http://tutorial-dax.weebly.com/ulse.html
+ * ===========================================================================
+ * List of code to use on 'script' paramater:
+ * ===========================================================================
+ * ** range {number} : by tile quantity
+ * ** target {number} : -1 -> Player | 0 -> local event | x -> id of another 
+ * event
+ * ** type {string} : see below:
+ * Command to use:
+ * this.sensor(type, range, target) 
+ *  example: this.sensor("area", 5, -1) (or) this.sensor("a", 5, -1)
+ * ===========================================================================
+ * type: {string}
+ *  "area"|"a": Check out by square area
+ *  "on"|"o": Check out if the targe is on (above)
+ *  "right"|"r": Sensor by a right line. ​Static line: would fix independent of 
+ * the direction that the event is.
+ *  "left"|"l": Sensor by a left line. ​Static line: would fix independent of
+ * the direction that the event is.
+ *  "front"|"f": Sensor by a front line. ​Static line: would fix independent of 
+ * the direction that the event is.
+ *  "ago"|"a": Sensor by a back line. ​Static line: would fix independent of 
+ * the direction that the event is.
+ *  "cross"|"+": Sensor as cross form (+ symbol). ​Static line:
+ * would fix independent of the direction that the event is.
+ *  "vision"|"v": Sensor just on vision of the event.  In straight line
+ *  "behind"|"b": Sensor just on behind of the event (watch your backs). 
+ * In straight line
+ *  "left-arm"|"la": Sensor just on left of the event.  In straight line.
+ *  "right-arm"|"ra": Sensor just on right of the event.  In straight line
+ *  "top-left"|"tl": Sensor ​on the top-left. Diagonal
+ *  "top-right"|"tr": Sensor ​on the top-right. Diagonal
+ *  "bottom-right"|"br": Sensor ​on the bottom-right. Diagonal
+ *  "bottom-left"|"bl": Sensor ​on the bottom-right. Diagonal
+ *  "diagonal"|"x": Sensor as cross form (x symbol). 
+ * Sensor on all diagonal sides
+ *  "diagonal-vision"|"dv": Sensor just on vision of the event. 
+ * In DIAGONAL side
+ *  "diagonal-back"|"db": Sensor just on backs (behind) of the event. 
+ * In DIAGONAL side
+ *  "circle"|"c": Sensor on circle form.
+ *  "full-vision"|"fv": Sensor on full field of vision
+ *  "full-back"|"fb": Sensor on full field of vision (on backs)
  * ===========================================================================
 */
 
@@ -24,14 +65,13 @@
  * @var Imported
  * @desc valid import 
  */
-Imported = Imported || {};
+var Imported = Imported || {};
 
 /**
  * @var Ulse
  * @desc global variable of script
  */
-var Ulse = Ulse || {}
-Ulse.version = 1.6;
+var Ulse = Ulse || {};
 
 (function ($) {
 'use strict';
@@ -139,7 +179,7 @@ Ulse.version = 1.6;
         var _switch = _switch || false;
         // check out
         if (target._x === this._x) {
-            for (let y = this._y; y < (this._x + Math.floor(range)); y++) {
+            for (let y = this._y; y < (this._y + Math.floor(range)); y++) {
                 if (!(this.isMapPassable(this._x, y, 2))) break;
                 if (target._y === y) _switch = true;
             }
@@ -413,5 +453,66 @@ Ulse.version = 1.6;
             this.sensorBack(range, target)
         );
     }
+    // ============================================================================
+    /**
+     * @class Game_Interpreter
+     * @classdesc interpreter of actions from events
+     */
+
+    /**
+     * @function sensor
+     * @description make more easy to check out sensors on 'event page manager'
+     * @param {string} type see on '@help' section
+     * @param {number} range
+     * @param {number} target
+     * @returns {boolean}
+    */
+    Game_Interpreter.prototype.sensor = function (type, range, target) {
+        // target
+        type = type.trim();
+        target = this.character(target);
+        // return
+        if (type.match(/^(area|a)/i)) {
+            return (this.character(0).sensorArea(range, target));
+        } else if (type.match(/^(on|o)/i)) {
+            return (this.character(0).sensorOn(range, target));
+        } else if (type.match(/^(right|r)/i)) {
+            return (this.character(0).sensorRight(range, target));
+        } else if (type.match(/^(left|l)/i)) {
+            return (this.character(0).sensorLeft(range, target));
+        } else if (type.match(/^(ago|ag)/i)) {
+            return (this.character(0).sensorAgo(range, target));
+        } else if (type.match(/^(cross|\+)/i)) {
+            return (this.character(0).sensorCross(range, target));
+        } else if (type.match(/^(vision|v)/i)) {
+            return (this.character(0).sensorVision(range, target));
+        } else if (type.match(/^(behind|b)/i)) {
+            return (this.character(0).sensorBehind(range, target));
+        } else if (type.match(/^(left-arm|la)/i)) {
+            return (this.character(0).sensorLeftArm(range, target));
+        } else if (type.match(/^(right-arm|ra)/i)) {
+            return (this.character(0).sensorRightArm(range, target));
+        } else if (type.match(/^(top-left|tl)/i)) {
+            return (this.character(0).sensorTopLeft(range, target));
+        } else if (type.match(/^(top-right|tr)/i)) {
+            return (this.character(0).sensorTopRight(range, target));
+        } else if (type.match(/^(bottom-left|bl)/i)) {
+            return (this.character(0).sensorBottomLeft(range, target));
+        } else if (type.match(/^(bottom-right|br)/i)) {
+            return (this.character(0).sensorBottomRight(range, target));
+        } else if (type.match(/^(diagonal|x)/i)) {
+            return (this.character(0).sensorDiagonal(range, target));
+        } else if (type.match(/^(diagonal-vision|dv)/i)) {
+            return (this.character(0).sensorDiagonalVision(range, target));
+        } else if (type.match(/^(diagonal-back|db)/i)) {
+            return (this.character(0).sensorDiagonalBack(range, target));
+        } else if (type.match(/^(circle|c)/i)) {
+            return (this.character(0).sensorCircle(range, target));
+        } else if (type.match(/^(full-vision|fv)/i)) {
+            return (this.character(0).sensorFullVision(range, target));
+        } else if (type.match(/^(full-back|fb)/i)) {
+            return (this.character(0).sensorFullBack(range, target));
+        }
+    };
 })(Ulse);
 Imported["Ulse"] = true;
