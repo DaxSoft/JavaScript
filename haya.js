@@ -291,10 +291,14 @@ if (typeof String.prototype.clean === 'undefined') {
         return data;
     }
     /**
-     * @description list of download
+     * @description variables to manager download
+     * @var $.FileIO.Download.list list of download
+     * @var $.FileIO.Download.index index toward list
+     * @var $.FileIO.Download.request request of http
      */
     $.FileIO.Download.list = [];
     $.FileIO.Download.index = 0;
+    $.FileIO.Download.request = [];
     /**
      * @description set download list
      * @param {array} array Set using Object
@@ -314,12 +318,13 @@ if (typeof String.prototype.clean === 'undefined') {
     }
     /**
      * @description download the file
-     * @param {string} url
-     * @param {string} dest
-     * @param {string} filename
-     * @param {function} onLoad | (dest, filename)
+     * @param {string} url http link
+     * @param {string} dest folder to save
+     * @param {string} filename if is not defined will be http filename
+     * @param {function} onLoad function to call when it is ready
      * @param {function} onProgress | (current (chunk.length), total (content-length), chunk)
      * @param {number} index
+     * @returns {boolean}
      */
     $.FileIO.Download.download = function(url, dest, filename, onLoad, onProgress, index) {
         if (isNaN($.FileIO.Download.index)) return false;
@@ -346,7 +351,7 @@ if (typeof String.prototype.clean === 'undefined') {
         // file
         var file = fs.createWriteStream(destination);
         // request
-        var request = http.get(url, function (res) {
+        $.FileIO.Download.request[index] = $.FileIO.Download.request[index] || http.get(url, function (res) {
             res.on('data', function (chunk) {
                 if ($.Utils.isFunction(onProgress)) {
                     onProgress.call(
@@ -366,6 +371,7 @@ if (typeof String.prototype.clean === 'undefined') {
                         })
                         $.FileIO.Download.index++;
                         $.FileIO.Download.index %= $.FileIO.Download.list.length;
+                        $.FileIO.Download.request.splice(index, 1);
                         onLoad.call(this);
                    });
                 }
@@ -377,7 +383,7 @@ if (typeof String.prototype.clean === 'undefined') {
         return true;
     }
     /**
-     * @description run download of file list
+     * @description download all set up 
      */
     $.FileIO.Download.run = function() {
         // if is empty or invalid
