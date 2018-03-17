@@ -3,8 +3,9 @@
 /**
  * @file Haya - Core
  * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
- * @version 0.2.3
- * @license https://dax-soft.weebly.com/legal.html
+ * @version 0.2.4
+ * @license MIT
+ * https://dax-soft.weebly.com/legal.html
  * Special thanks for Fehu (Alisson)
  */
 
@@ -12,7 +13,7 @@
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc Essential core for my script to MV. [0.2.3]
+ * @plugindesc Essential core for my plugins to MV. [0.2.4]
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
@@ -118,6 +119,13 @@ if (typeof String.prototype.clean === 'undefined') {
     $.alias = new Object();
     $.Pixi = new Object();
     $.Pixi.TextureCache = new Object();
+    /**
+     * @description constants
+     * @const fs require('fs')
+     * @constant path require('path')
+     */
+    const fs = require('fs');
+    const path = require('path');
     // =============================================================================
     /**
      * :fileio
@@ -178,7 +186,6 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} filepath local filepath to file | url
      */
     $.FileIO.toJson = function(object, filepath) {
-        var fs = require('fs');
         var data = JSON.stringify(object, "\t");
         if (!filepath.match(/\.json$/i)) filepath += ".json";
         fs.writeFile(filepath, data, function (err) {
@@ -203,9 +210,17 @@ if (typeof String.prototype.clean === 'undefined') {
      * @return {string}
      */
     $.FileIO.local = function(pathname) {
-        let path = require('path');
         var localDirBase = path.dirname(process.mainModule.filename);
         return path.join(localDirBase, pathname);
+    }
+    /**
+     * @desc create a new folder
+     * @param {string} pathname
+     * @returns {string}
+     */
+    $.FileIO.mkdir = function(pathname, localable) {
+        if (localable) pathname = $.FileIO.local(pathname);
+        if (!fs.existsSync(pathname)) fs.mkdirSync(pathname);
     }
     /**
      * @desc get the list of files from folder
@@ -215,9 +230,6 @@ if (typeof String.prototype.clean === 'undefined') {
     $.FileIO.list = function(filepath, callback) {
         // get local folder
         filepath = $.FileIO.local(filepath);
-        // variables
-        let fs = require('fs'),
-            path = require('path');
         // folder exist?
         if (!fs.existsSync(filepath)) { console.warn("folder fon't found", filepath); return []; }
         // get
@@ -298,7 +310,7 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     $.FileIO.Download.list = [];
     $.FileIO.Download.index = 0;
-    $.FileIO.Download.request = [];
+    $.FileIO.Download.request = undefined;
     /**
      * @description set download list
      * @param {array} array Set using Object
@@ -315,6 +327,7 @@ if (typeof String.prototype.clean === 'undefined') {
     $.FileIO.Download.set = function(array) {
         $.FileIO.Download.list = array;
         $.FileIO.Download.index = 0;
+        $.FileIO.Download.request = undefined;
     }
     /**
      * @description download the file
@@ -326,61 +339,48 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {number} index
      * @returns {boolean}
      */
-    $.FileIO.Download.download = function(url, dest, filename, onLoad, onProgress, index) {
-        if (isNaN($.FileIO.Download.index)) return false;
-        // return
-        if ($.Utils.invalid(url)) return false;
-        if ($.Utils.invalid($.FileIO.Download.list[index])) return false;
-        // Node
-        var fs = require('fs');
-        var http = null;
-        // http
-        if (url.match(/(https)/i)) {
-            http = require('https');
-        } else {
-            http = require('http');
-        }
-        // return
-        if ($.Utils.invalid(http)) return false;
+    $.FileIO.Download.get = function(url, dest, filename, onLoad, onProgress, index) {
+        // return case
+        if ($.Utils.invalid(url) || $.Utils.invalid($.FileIO.Download.list[index])) return false;
+        // require
+        var http = http || (url.match(/(https)/i)) ? require("https") : require("http");
         // filename
-        filename = filename || url.split('/').pop();
-        // dest
-        dest = $.FileIO.local(dest || "");
-        if (!fs.existsSync(dest)) fs.mkdirSync(dest);
-        var destination = dest + "/" + filename;
-        // file
-        var file = fs.createWriteStream(destination);
+        var fname = filename || url.split('/').pop();
+        // destination
+        dest = $.FileIO.local(dest || "");  
+        $.FileIO.mkdir(dest);
+        // create file
+        var file = fs.createWriteStream(dest + "/" + fname);
         // request
-        $.FileIO.Download.request[index] = $.FileIO.Download.request[index] || http.get(url, function (res) {
-            res.on('data', function (chunk) {
-                if ($.Utils.isFunction(onProgress)) {
-                    onProgress.call(
-                        this, 
-                        chunk.length, 
-                        parseInt(res.headers['content-length']), 
-                    chunk);
-                }
-            })
-            res.pipe(file);
+        $.FileIO.Download.request = http.get(url, function (res) {
+            // finish
             file.on('finish', function () {
-                if (this.bytesWritten === parseInt(res.headers['content-length'])) {
-                    file.close(function () {
-                        $.FileIO.Download.list[index] = null;
-                        $.FileIO.Download.list = $.FileIO.Download.list.filter(function(el) { 
-                            return !($.Utils.invalid(el)) 
-                        })
-                        $.FileIO.Download.index++;
-                        $.FileIO.Download.index %= $.FileIO.Download.list.length;
-                        $.FileIO.Download.request.splice(index, 1);
-                        onLoad.call(this);
-                   });
-                }
+                file.close(function () {
+                    $.FileIO.Download.next();
+                    if ($.Utils.isFunction(onLoad)) onLoad.call(this);
+                    return;
+                })
             })
+            // status
+            if (res.statusCode !== 200) {
+                return;
+            }
+            // progress 
+            if ($.Utils.isFunction(onProgress)) {
+                res.on('data', function (chunk) {
+                    onProgress.call(
+                        this,
+                        chunk.length,
+                        parseInt(res.headers['content-length']),
+                        chunk);
+                })
+            }
+            // pipe toward file
+            res.pipe(file);
         }).on('error', function (err) {
-            fs.unlink(dest);
+            fs.unlink(dest + "/" + fname);
             console.warn(err.message);
         })
-        return true;
     }
     /**
      * @description download all set up 
@@ -392,26 +392,30 @@ if (typeof String.prototype.clean === 'undefined') {
         if ($.FileIO.Download.list.length < 1) return;
         if (isNaN($.FileIO.Download.index)) return false;
         // index
-        let index = $.FileIO.Download.index;
-        // return
-        if ($.Utils.invalid($.FileIO.Download.list[index])) return false;
+        var index = $.FileIO.Download.index;
         // value
-        let value = $.FileIO.Download.list[index];
-        // is object
-        if (!$.Utils.isObject(value)) return false;
-        if ($.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index)) {
-            
-        } else {
-            $.FileIO.Download.list[index] = null;
-            $.FileIO.Download.list = $.FileIO.Download.list.filter(function(el) { 
-                return !($.Utils.invalid(el)) 
-            })
+        var value = $.FileIO.Download.list[index];
+        // return
+        if ($.Utils.invalid(value) || !$.Utils.isObject(value)) {
+            $.FileIO.Download.next();
             return false;
-        }
+        };
+        $.FileIO.Download.get(value.url, value.dest, value.name, value.onLoad, value.onProgress, index)
         // return true
         return true;
     }
-
+    /**
+     * @description next of download list
+     */
+    $.FileIO.Download.next = function() {
+        $.FileIO.Download.list[$.FileIO.Download.index] = null;
+        $.FileIO.Download.list = $.FileIO.Download.list.filter(function (element) {
+            return $.Utils.isObject(element)
+        })
+        $.FileIO.Download.index++;
+        $.FileIO.Download.index %= $.FileIO.Download.list.length;
+        $.FileIO.Download.request = undefined;
+    }
     //$.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
     // =============================================================================
     /**
@@ -766,10 +770,15 @@ if (typeof String.prototype.clean === 'undefined') {
     $.SpriteObject = class extends PIXI.Container {
         /**
          * @param {object} hash that contains
-         *      [string] type: [text or picture, default is picture],
-         *      [PIXI.Texture] texture: [just if the type is "picture"],
-         *      [string] text: [first text value, if the type is "texture"],
-         *      [class] stage: [place where this sprite will be add on child, for default is SceneManger._scene]
+         *      {string} type: [text, picture or graphic, default is picture],
+         *      {PIXI.Texture} texture: [just if the type is "picture"],
+         *      {object} graphic: [if type is "graphic"],
+         *          {string} type: ["circle", "rect"],
+         *          {hex, string} bfill: [beginFill],
+         *          {number} x, y, width, height: [dimensions],
+         *          {number} radius: [if is circle]
+         *      {string} text: [first text value, if the type is "texture"],
+         *      {class} stage: [place where this sprite will be add on child, for default is SceneManger._scene]
          * @param {function} callback to setup
          */
         constructor(hash, callback) {
@@ -780,9 +789,9 @@ if (typeof String.prototype.clean === 'undefined') {
             this.load();
             if ($.Utils.isFunction(this.callback)) this.callback.apply(this, arguments);
         }
-        // -------------------------------------------------------------------------
-        // setup
-        // ------------------------------------------------------------------------- 
+        /**
+         * @desc default setup and mouse setup
+         */
         setup() {
             // default setup
             this._x = this.hash.x || 0;
@@ -802,9 +811,9 @@ if (typeof String.prototype.clean === 'undefined') {
                 drag: {active: false, start: false, function: null}
             });
         }
-        // -------------------------------------------------------------------------
-        // load texture
-        // -------------------------------------------------------------------------
+        /**
+         * @description load texture
+         */
         load() {
             // type | default is 'picture'
             this.hash.type = this.hash.type || "picture";
@@ -820,6 +829,33 @@ if (typeof String.prototype.clean === 'undefined') {
                 // default sprite
                 this.sprite = new PIXI.Text("");
                 this.sprite.text = this.hash.text || "";
+            } else if (this.hash.type === "graphic") {
+                // default
+                this.hash.graphic = this.hash.graphic || {};
+                this.hash.graphic.type = this.hash.graphic.type || "rect";
+                this.hash.graphic.bfill = this.hash.graphic.bfill || 0xFFFFFF;
+                this.hash.graphic.alpha = this.hash.graphic.alpha || 1;
+                this.hash.graphic.x = this.hash.graphic.x || 0;
+                this.hash.graphic.y = this.hash.graphic.y || 0;
+                this.hash.graphic.width = this.hash.graphic.width || 96;
+                this.hash.graphic.height = this.hash.graphic.height || 96;
+                this.hash.graphic.radius = this.hash.graphic.radius || 32;
+                // draw
+                this.sprite = new PIXI.Graphics();
+                this.sprite.beginFill(this.hash.graphic.bfill, this.hash.graphic.alpha);
+                // type
+                if (this.hash.graphic.type === "rect") {
+                    this.sprite.drawRect(
+                        this.hash.graphic.x, this.hash.graphic.y,
+                        this.hash.graphic.width, this.hash.graphic.height
+                    )
+                } else if (this.hash.graphic.type === "circle") {
+                    this.sprite.drawCircle(
+                        this.hash.graphic.x,
+                        this.hash.graphic.y,
+                        this.hash.graphic.radius
+                    )
+                }
             }
             // stage | default is 'scene'
             this.hash.stage = this.hash.stage || SceneManager._scene;
@@ -842,9 +878,9 @@ if (typeof String.prototype.clean === 'undefined') {
                 this.sprite.destroy(destroy);  
             } 
         }
-        // -------------------------------------------------------------------------
-        // update
-        // -------------------------------------------------------------------------
+        /**
+         * @description update sprite
+         */
         update() {
             // return if is not loaded
             if (this._loaded === false) return;
@@ -891,9 +927,10 @@ if (typeof String.prototype.clean === 'undefined') {
                 this.sprite.scale.y *= -1;
             }
         }
-        // -------------------------------------------------------------------------
-        // check out if mouse is over
-        // -------------------------------------------------------------------------
+        /**
+         * @description check out if mouse is over sprite
+         * @return {Boolean} 
+         */
         mouseOver() {
             if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
             if (this.mouse.x.isBetween(this.sprite.hitArea.x, this.sprite.hitArea.x + this.sprite.hitArea.width)) {
@@ -903,9 +940,9 @@ if (typeof String.prototype.clean === 'undefined') {
             }
             return false; 
         }
-        // -------------------------------------------------------------------------
-        // update the mouse
-        // -------------------------------------------------------------------------
+        /**
+         * @description update mouse 
+         */
         updateMouse() {
             // check out if the mouse is over or not
             if (this.mouseOver()) {
