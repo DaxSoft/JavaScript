@@ -123,9 +123,12 @@ if (typeof String.prototype.clean === 'undefined') {
      * @description constants
      * @const fs require('fs')
      * @constant path require('path')
+     * @constant https require('https)
      */
     const fs = require('fs');
     const path = require('path');
+    const http = require('http');
+    const https = require('https');
     // =============================================================================
     /**
      * :fileio
@@ -168,11 +171,9 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} filepath local filepath to file | url
      * @return {object} return to HTTLDocument 
      */
-    $.FileIO.xml = function(filepath) {
-        let filetext = String($.FileIO.txt(filepath));
-        var parser = new DOMParser();
-        var result = parser.parseFromString(filetext,  "application/xml");
-        return result;
+    $.FileIO.xml = function(filepath, mime) {
+        var string = $.FileIO.txt(filepath);
+        return (new DOMParser()).parseFromString(string,  mime || "application/xml");
     }
     /**
      * @desc read JSON file and return to object
@@ -302,121 +303,83 @@ if (typeof String.prototype.clean === 'undefined') {
         // return
         return data;
     }
+
     /**
-     * @description variables to manager download
-     * @var $.FileIO.Download.list list of download
-     * @var $.FileIO.Download.index index toward list
-     * @var $.FileIO.Download.request request of http
-     */
-    $.FileIO.Download.list = [];
-    $.FileIO.Download.index = 0;
-    $.FileIO.Download.request = undefined;
-    /**
-     * @description set download list
-     * @param {array} array Set using Object
-     * @example 
-     * // array param
-     * [{url: "link", dest: "", name: "", onLoad: function, onProgress: function(value)}]
-     * // description
-     * url: "http link";
-     * dest: "local to save"; // on project folder | not defined will be main folder project
-     * name: "filename"; // if is empty or not defined, will be the default filename
-     * onLoad: function(); // will call the function after download
-     * onProgress: function(value, total, chucnk); // return to value of chunk progress (length)
-     */
-    $.FileIO.Download.set = function(array) {
-        $.FileIO.Download.list = array;
-        $.FileIO.Download.index = 0;
-        $.FileIO.Download.request = undefined;
-    }
-    /**
-     * @description download the file
+     * @description download the file type text
      * @param {string} url http link
      * @param {string} dest folder to save
      * @param {string} filename if is not defined will be http filename
      * @param {function} onLoad function to call when it is ready
-     * @param {function} onProgress | (current (chunk.length), total (content-length), chunk)
-     * @param {number} index
+     *                   (basename, dest + filename)
      * @returns {boolean}
      */
-    $.FileIO.Download.get = function(url, dest, filename, onLoad, onProgress, index) {
+    $.FileIO.Download.txt = function(url, dest, filename, onLoad) {
         // return case
-        if ($.Utils.invalid(url) || $.Utils.invalid($.FileIO.Download.list[index])) return false;
-        // require
-        var http = http || (url.match(/(https)/i)) ? require("https") : require("http");
-        // filename
-        var fname = filename || url.split('/').pop();
-        // destination
-        dest = $.FileIO.local(dest || "");  
+        if ($.Utils.invalid(url)) return false;
+        // setup
+        var fname = filename || path.basename(url);
+        dest = $.FileIO.local(dest || "");
         $.FileIO.mkdir(dest);
-        // create file
-        var file = fs.createWriteStream(dest + "/" + fname);
+        var destinanation = dest + "/" + fname;
         // request
-        $.FileIO.Download.request = http.get(url, function (res) {
-            // finish
-            file.on('finish', function () {
-                file.close(function () {
-                    $.FileIO.Download.next();
-                    if ($.Utils.isFunction(onLoad)) onLoad.call(this);
-                    return;
-                })
-            })
-            // status
-            if (res.statusCode !== 200) {
-                return;
-            }
-            // progress 
-            if ($.Utils.isFunction(onProgress)) {
-                res.on('data', function (chunk) {
-                    onProgress.call(
-                        this,
-                        chunk.length,
-                        parseInt(res.headers['content-length']),
-                        chunk);
-                })
-            }
-            // pipe toward file
-            res.pipe(file);
-        }).on('error', function (err) {
-            fs.unlink(dest + "/" + fname);
-            console.warn(err.message);
-        })
-    }
-    /**
-     * @description download all set up 
-     */
-    $.FileIO.Download.run = function() {
-        // if is empty or invalid
-        if ($.Utils.invalid($.FileIO.Download.list)) return false;
-        if (!$.Utils.isArray( $.FileIO.Download.list)) return false;
-        if ($.FileIO.Download.list.length < 1) return;
-        if (isNaN($.FileIO.Download.index)) return false;
-        // index
-        var index = $.FileIO.Download.index;
-        // value
-        var value = $.FileIO.Download.list[index];
-        // return
-        if ($.Utils.invalid(value) || !$.Utils.isObject(value)) {
-            $.FileIO.Download.next();
-            return false;
-        };
-        $.FileIO.Download.get(value.url, value.dest, value.name, value.onLoad, value.onProgress, index)
-        // return true
+        var xhttp = new XMLHttpRequest();
+        // abort
+        var abort = false;
+        // load
+        xhttp.onload = function() {
+            var data = xhttp.responseText;
+            fs.writeFile(destinanation, data);
+            if ($.Utils.isFunction(onLoad)) onLoad.call(this, path.basename(destinanation), destinanation);
+            abort = true;
+        }
+        // abort?
+        if (!abort) {
+            // open
+            xhttp.open("GET", url, true);
+            xhttp.send(null);
+        }
         return true;
     }
     /**
-     * @description next of download list
+     * @description download image type
+     * @param {string} url http link
+     * @param {string} dest folder to save
+     * @param {string} filename if is not defined will be http filename
+     * @param {string} type blob type ("image/png" or "image/jpg")
+     * @param {function} onLoad function to call when it is ready
+     *                   (basename, dest + filename)
+     * @returns {boolean}
      */
-    $.FileIO.Download.next = function() {
-        $.FileIO.Download.list[$.FileIO.Download.index] = null;
-        $.FileIO.Download.list = $.FileIO.Download.list.filter(function (element) {
-            return $.Utils.isObject(element)
-        })
-        $.FileIO.Download.index++;
-        $.FileIO.Download.index %= $.FileIO.Download.list.length;
-        $.FileIO.Download.request = undefined;
+    $.FileIO.Download.img = function(url, dest, filename, type, onLoad) {
+        // return case
+        if ($.Utils.invalid(url)) return false;
+        // setup
+        var fname = filename || path.basename(url);
+        dest = $.FileIO.local(dest || "");
+        $.FileIO.mkdir(dest);
+        var destinanation = dest + "/" + fname;
+        // request
+        let xhttp = new XMLHttpRequest();
+        var mreader = new FileReader();
+        // setup
+        xhttp.responseType = 'arraybuffer';
+        xhttp.open('GET', url, true);
+        // stage
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == this.DONE) {
+                let blob = new Blob([this.response], {type: type || "image/png"});
+                mreader.onload = function () {
+                    var buffer = new Uint8Array(this.result);
+                    buffer = Buffer(buffer);
+                    fs.writeFile(destinanation, buffer);
+                    if ($.Utils.isFunction(onLoad)) onLoad(fname, destinanation);
+                }
+                mreader.readAsArrayBuffer(blob);
+            }
+        }
+        // send
+        xhttp.send(null)
     }
-    //$.FileIO.Download.download(value.url, value.dest, value.name, value.onLoad, value.onProgress, index);
     // =============================================================================
     /**
      * :util
