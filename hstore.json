@@ -2,6 +2,7 @@
     "general": {
             "author": "Dax Soft (Kvothe)",
             "picture": "http://haya-art.weebly.com/uploads/1/5/7/2/15724724/1461334093.png",
+            "background": "https://i.imgur.com/IWSQEbQ.png",
             "description": [
                 "Plugins made by Dax Soft in which you can download or check out updates on this Store.",
                 "Attention: last plugin add-on 'Ulse'",
@@ -10,6 +11,24 @@
     },
 
     "plugin": [
+        {
+            "name": "Haya Core",
+            "version": 0.24,
+            "requeriment": [],
+            "incompatible": [],
+            "description": [
+                "Essential core for my plugins to MV",
+                "This plugin provides several tools (functions, class) to make more easy and flexible the creation and the develop new plugins.",
+                "Almost every line have a comment section for any person understand."
+            ],
+            "js": [
+                {
+                    "url": "https://raw.githubusercontent.com/DaxSoft/JavaScript/master/haya.js",
+                    "filename": "Haya Core.js"
+                }
+            ]
+        },
+
         {
             "name": "Ultimate Sensor Event",
             "version": 1.6,
