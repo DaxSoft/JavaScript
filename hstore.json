@@ -13,7 +13,7 @@
     "plugin": [
         {
             "name": "Haya Core",
-            "version": 0.24,
+            "version": "0.2.4",
             "requeriment": [],
             "incompatible": [],
             "description": [
@@ -31,7 +31,7 @@
 
         {
             "name": "Ultimate Sensor Event",
-            "version": 1.60,
+            "version": "1.6.1",
             "requeriment": [],
             "incompatible": [],
             "description": [
