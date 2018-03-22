@@ -320,24 +320,17 @@ if (typeof String.prototype.clean === 'undefined') {
         var fname = filename || path.basename(url);
         dest = $.FileIO.local(dest || "");
         $.FileIO.mkdir(dest);
-        var destinanation = dest + "/" + fname;
+        let destination = dest + "/" + fname;
         // request
-        var xhttp = new XMLHttpRequest();
-        // abort
-        var abort = false;
+        this.xhttp = new XMLHttpRequest();
         // load
-        xhttp.onload = function() {
-            var data = xhttp.responseText;
-            fs.writeFile(destinanation, data);
-            if ($.Utils.isFunction(onLoad)) onLoad.call(this, path.basename(destinanation), destinanation);
-            abort = true;
+        this.xhttp.onload = function() {
+            fs.writeFile(destination, this.responseText);
+            if ($.Utils.isFunction(onLoad)) onLoad.call(this, path.basename(destination), destination);
         }
-        // abort?
-        if (!abort) {
-            // open
-            xhttp.open("GET", url, true);
-            xhttp.send(null);
-        }
+        // open
+        this.xhttp.open("GET", url, true);
+        this.xhttp.send(null);
         return true;
     }
     /**
@@ -357,28 +350,40 @@ if (typeof String.prototype.clean === 'undefined') {
         var fname = filename || path.basename(url);
         dest = $.FileIO.local(dest || "");
         $.FileIO.mkdir(dest);
-        var destinanation = dest + "/" + fname;
+        let destination = dest + "/" + fname;
         // request
-        let xhttp = new XMLHttpRequest();
-        var mreader = new FileReader();
+        this.xhttp = new XMLHttpRequest();
+        let mreader = new FileReader();
+        if ($.Utils.invalid(type) || String(type || "").isEmpty()) {
+            if (url.match(/jpg/i)) {
+                type = "jpg"
+            } else if (url.match(/png/i)) {
+                type = "png";
+            } else {
+                type = "png";
+            }
+        }
+        // destinanation
+        if (!(destination.match(/\.(\w+)$/i))) {
+            destination += "." + type;
+        }
         // setup
-        xhttp.responseType = 'arraybuffer';
-        xhttp.open('GET', url, true);
+        this.xhttp.responseType = 'arraybuffer';
+        this.xhttp.open('GET', url, true);
         // stage
-        xhttp.onreadystatechange = function () {
+        this.xhttp.onreadystatechange = function () {
             if (this.readyState == this.DONE) {
-                let blob = new Blob([this.response], {type: type || "image/png"});
+                let blob = new Blob([this.response], {type: String("image/" + type)});
+                
                 mreader.onload = function () {
-                    var buffer = new Uint8Array(this.result);
-                    buffer = Buffer(buffer);
-                    fs.writeFile(destinanation, buffer);
-                    if ($.Utils.isFunction(onLoad)) onLoad(fname, destinanation);
+                    fs.writeFile(destination, Buffer(new Uint8Array(this.result)));
+                    if ($.Utils.isFunction(onLoad)) onLoad(fname, destination);
                 }
                 mreader.readAsArrayBuffer(blob);
             }
         }
         // send
-        xhttp.send(null)
+        this.xhttp.send(null)
     }
     // =============================================================================
     /**
@@ -679,7 +684,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @memberof Haya.Pixi
      * @desc manager for some functios toward PIXI
      */
-    $.Pixi.Manager = function() { throw new Error('This is a static class'); }
+    $.Pixi.Manager = function() { throw new Error('This is a static class'); } 
     /**
      * @desc load texture using PIXI
      * @param {object} request that:
@@ -688,7 +693,9 @@ if (typeof String.prototype.clean === 'undefined') {
      * @return {boolean}
      */
     $.Pixi.Manager.load = function(request) {
+        // return
         if (!$.Utils.isObject(request)) return false;
+        // loader
         var loader = loader || new PIXI.loaders.Loader();
         // add
         for (name in request) {
@@ -847,18 +854,23 @@ if (typeof String.prototype.clean === 'undefined') {
         update() {
             // return if is not loaded
             if (this._loaded === false) return;
-            // render
-            this.sprite.updateTransform();
-            Graphics.render(this.sprite);
             // update hit area
             this.sprite.hitArea.x = this.sprite.x;
             this.sprite.hitArea.y = this.sprite.y;
+            this.sprite.hitArea.width = this.sprite.width;
+            this.sprite.hitArea.height = this.sprite.height;
+            // render
+            this.sprite.updateTransform();
+            Graphics.render(this.sprite);
             // check out if the mouse will be used on
-            if (this.mouse.active) {
-                // get the mouse position
-                this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
-                this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
-                this.updateMouse();
+            // check out if is visible
+            if (this.sprite.visible === true) {
+                if (this.mouse.active) {
+                    // get the mouse position
+                    this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
+                    this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
+                    this.updateMouse();
+                }
             }
             // _update
             if ($.Utils.isFunction(this._update)) this._update.apply(this, arguments);
