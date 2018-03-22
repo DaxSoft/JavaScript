@@ -30,6 +30,24 @@
         },
 
         {
+            "name": "Plugin Store",
+            "version": "0.1.1",
+            "requeriment": [],
+            "incompatible": [],
+            "description": [
+                "With this plugin you can download or check if is any update of your",
+                "favorite plugins by your favorite authors (of course, for this you need",
+                "a register link and... the plugin author has to create one :v). Oh, dude... you already know this ¬¬"
+            ],
+            "js": [
+                {
+                    "url": "https://raw.githubusercontent.com/DaxSoft/JavaScript/master/pstore.js",
+                    "filename": "Plugin Store.js"
+                }
+            ]
+        },
+
+        {
             "name": "Ultimate Sensor Event",
             "version": "1.6.1",
             "requeriment": [],
