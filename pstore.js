@@ -1007,9 +1007,9 @@ var PStore = PStore || {};
                     height: Graphics.height 
                 }
             }, function() {
-                // requeriment title
-                this.requeriment = Haya.Text(
-                    "requeriment".toUpperCase(),
+                // requirement title
+                this.requirement = Haya.Text(
+                    "requirement".toUpperCase(),
                     {stage: this.sprite},
                     function () {
                         // style
@@ -1025,7 +1025,7 @@ var PStore = PStore || {};
                         this.sprite.y = 8;
                     }
                 ) 
-                // requeriment list
+                // requirement list
                 this.rlist = Haya.Text(
                     "",
                     {stage: this.sprite},
@@ -1048,13 +1048,13 @@ var PStore = PStore || {};
                         this._update = function () {
                             if (this.sprite.visible) {
                                 // has to be
-                                if (!(Haya.Utils.invalid($.Register.current.requeriment))) {
-                                    console.log(Haya.Utils.isArray($.Register.current.requeriment))
+                                if (!(Haya.Utils.invalid($.Register.current.requirement))) {
+                                    console.log(Haya.Utils.isArray($.Register.current.requirement))
                                     // if is array
-                                    if (Haya.Utils.isArray($.Register.current.requeriment)) {
+                                    if (Haya.Utils.isArray($.Register.current.requirement)) {
                                         // has more than zero
-                                        if ($.Register.current.requeriment.length > 0) {
-                                            this._text = $.Register.current.requeriment.join("\n");
+                                        if ($.Register.current.requirement.length > 0) {
+                                            this._text = $.Register.current.requirement.join("\n");
                                         } else {
                                             this._text = "None"
                                         }
