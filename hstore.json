@@ -32,7 +32,7 @@
         {
             "name": "Plugin Store",
             "version": "0.1.1",
-            "requeriment": [],
+            "requeriment": ["Haya Core"],
             "incompatible": [],
             "description": [
                 "With this plugin you can download or check if is any update of your",
