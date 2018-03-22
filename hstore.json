@@ -14,7 +14,7 @@
         {
             "name": "Haya Core",
             "version": "0.2.4",
-            "requeriment": [],
+            "requirement": [],
             "incompatible": [],
             "description": [
                 "Essential core for my plugins to MV",
@@ -32,7 +32,7 @@
         {
             "name": "Plugin Store",
             "version": "0.1.1",
-            "requeriment": ["Haya Core"],
+            "requirement": ["Haya Core"],
             "incompatible": [],
             "description": [
                 "With this plugin you can download or check if is any update of your",
@@ -50,7 +50,7 @@
         {
             "name": "Ultimate Sensor Event",
             "version": "1.6.1",
-            "requeriment": [],
+            "requirement": [],
             "incompatible": [],
             "description": [
                 "System of sensor. Used to make the npc detect your presence — of the player.",
