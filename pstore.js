@@ -45,7 +45,7 @@ var PStore_Register = [
  * I recommend that you just turn on this plugin when  you desire 
  * to download or check up updates.
  * ======================================================================
- * How create a register file: <link>
+ * How to: https://dax-soft.weebly.com/pluginstore.html
  * ======================================================================
  * With this plugin you can download or check if is any update of your 
  * favorite plugins by your favorite authors (of course, for this you need 
