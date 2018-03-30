@@ -79,6 +79,7 @@ class Test {
     }
     /**
      * @function alert
+     * @param {string} [text] set up a new text to var 'this.string'
      * @description Display a alert message in which contain the value
      * from 'this.string' or a new message in which you can setup.
     */
