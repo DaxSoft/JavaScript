@@ -1,40 +1,45 @@
 
 
 /**
- * @file Haya - Core
- * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
- * @version 0.2.4
- * @license MIT
- * https://dax-soft.weebly.com/legal.html
+ * @file [haya.js -> Haya Core]
+ * This plugin contain several tools and useful stuffs to make 
+ * somethigns more easy and faster.
  * Special thanks for Fehu (Alisson)
+ * =====================================================================
+ * @author Dax Soft | Kvothe <www.dax-soft.weebly.com> / <dax-soft@live.com>
+ * @version 0.2.7
+ * @license MIT <https://dax-soft.weebly.com/legal.html>
+ * =====================================================================
+ * @todo [ ] Better Download way
+ * @todo [ ] Better Manager for PIXI
+ * @todo [ ] Finish Collision methods
  */
-
 
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc Essential core for my plugins to MV. [0.2.4]
+ * @plugindesc Essential core for my plugins to MV. [0.2.7]
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
  */
-
-/* ================================================================================
-Ctrl+F [locate]:
-    :global
-    :number
-    :string
-    :fileio
-    :utils
-    :dmath
-    :touch
-    :sceneManager
-    :piximanager
-    :sprite
-    :tool
-================================================================================ */
 var Imported = Imported || new Object();
 var Haya = new Object();
+/* ================================================================================
+Ctrl+F [locate]:
+    :global [global functions]
+    :fileio [tools and useful stuffs for file manager]
+    :utils [general tools for several things]
+    :dmath [math function for stuffs]
+    :touch [TouchInpit]
+    :sceneManager [SceneManager]
+    :piximanager [manager for PIXI function]
+    :sprite [create easy sprites with PIXI]
+        :picture
+        :text
+        :graphic
+================================================================================ */
+
 // =================================================================================
 // [Global function] :global
 // =================================================================================
@@ -116,12 +121,27 @@ if (typeof String.prototype.clean === 'undefined') {
     // =============================================================================
     // [Global variable]: $ -> Haya
     // =============================================================================
-    $.alias = new Object();
-    $.Pixi = new Object();
-    $.Pixi.TextureCache = new Object();
     /**
-     * @description constants
-     * @const fs require('fs')
+     * @var $.alias
+     * @type {object}
+     * @description aliasing
+     * @var $.Pixi
+     * @type {function}
+     * @description take care of PIXI tools
+     * @var $.Pixi.TextureCache
+     * @type {object}
+     * @description take care of loaded textures
+     * @var $.Pixi.Sprite
+     * @type {function}
+     * @description take care of sprite stuffs
+     */
+    $.alias = new Object();
+    $.Pixi = function() { throw new Error('This is a static class'); };
+    $.Pixi.TextureCache = new Object();
+    $.Pixi.Sprite = function() { throw new Error('This is a static class'); };
+    /**
+     * @description some constants from Node
+     * @constant fs require('fs')
      * @constant path require('path')
      * @constant https require('https)
      */
@@ -134,18 +154,13 @@ if (typeof String.prototype.clean === 'undefined') {
      * :fileio
      * @function FileIO
      * @memberof Haya
-     * @desc manager for files
+     * @description Tools and useful stuffs to manager files
      */
     $.FileIO = function() { throw new Error('This is a static class'); }
     /**
      * @function Download
      * @memberof FileIO
-     * @description tool to download files from web
-     * @example 
-     *  // First, set up the links and destination:
-     *  Haya.FileIO.Download.set([{url: "", dest: "", onLoad: function}...]);
-     *  // Second, call on a update method:
-     *  Haya.FileIO.Download.run();
+     * @description Tools and useful stuffs to download things
      */
     $.FileIO.Download = function() { throw new Error('This is a static class'); }
     /**
@@ -181,6 +196,20 @@ if (typeof String.prototype.clean === 'undefined') {
      * @return {object}
      */
     $.FileIO.json = function(filepath) { return (JSON.parse($.FileIO.ajax(filepath))); }
+    /**
+     * @description create json file
+     * @param {object} [data]
+     * @param {string} [filepath]
+     * @returns {boolean}
+    */
+    $.FileIO.wjson = function(data, filepath) {
+        if (typeof filepath !== 'string') return false;
+        if (!($.Utils.isObject(data))) return false;
+        filepath = /.json$/i.test(filepath) ? filepath : filepath + ".json";
+        let local = $.FileIO.local(filepath);
+        fs.writeFile(filepath, JSON.stringify(data, null, "\t"))
+        return true;
+    }
     /**
      * @desc export object to JSON file
      * @param {object} object that will be exported
@@ -303,7 +332,6 @@ if (typeof String.prototype.clean === 'undefined') {
         // return
         return data;
     }
-
     /**
      * @description download the file type text
      * @param {string} url http link
@@ -312,6 +340,13 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {function} onLoad function to call when it is ready
      *                   (basename, dest + filename)
      * @returns {boolean}
+     * @example
+     *  Haya.FileIO.Download.txt(
+     *      "http://humanstxt.org/humans.txt",
+     *      "",
+     *      null,
+     *      function () { alert("File downloaded!") }
+     *  )
      */
     $.FileIO.Download.txt = function(url, dest, filename, onLoad) {
         // return case
@@ -390,9 +425,29 @@ if (typeof String.prototype.clean === 'undefined') {
      * :util
      * @function Utils
      * @memberof Haya
-     * @desc useful tools
+     * @description Tools and useful stuffs to check up things.
+     * 
+     * @function Object
+     * @memberof Utils
+     * @description Tools and useful stuffs for Object
+     * 
+     * @function String
+     * @memberof Utils
+     * @description Tools and useful stuffs for String
+     * 
+     * @function Array
+     * @memberof Utils
+     * @description Tools and useful stuffs for Array
+     * 
+     * @function Color
+     * @memberof Utils
+     * @description Tools and useful stuffs for Color
      */
-    $.Utils = function() { throw new Error('This is a static class'); }
+    $.Utils = function() { throw new Error('This is a static class'); };
+    $.Utils.Object = function() { throw new Error('This is a static class'); };
+    $.Utils.String = function() { throw new Error('This is a static class'); };
+    $.Utils.Array = function() { throw new Error('This is a static class'); };
+    $.Utils.Color = function() { throw new Error('This is a static class'); };
     /**
      * @desc check out if is object
      * @param {any}
@@ -444,33 +499,51 @@ if (typeof String.prototype.clean === 'undefined') {
         return booleanDefault || false;
     }
     /**
-     * @desc check out if has value on variable
-     * @param {any} 
+     * @desc check out if the object is invalid (neither undefined either null)
+     * @param {any} object
      * @return {boolean}
      */
-    $.Utils.hasValue = function(variable) { return (variable !== undefined || variable !== null); } 
+    $.Utils.invalid = function(object) { 
+        return (
+            typeof object === 'undefined'       ||
+            typeof object === 'null'             
+        );
+    }
     /**
-     * @desc check out if is invalid
-     * @param {any}
-     * @return {boolean}
-     */
-    $.Utils.invalid = function(object) { return (typeof object === 'undefined' || typeof object === 'null') }
+     * @description check up if object is false (undefined, null, NaN, false, 0, -1)
+     * @param {any} [object]
+     * @returns {boolean}
+    */
+    $.Utils.isFalse = function(object) {
+        if ($.Utils.invalid(object) || object === NaN || object === 0 || object === -1 || object === false) return true;
+        return false;
+    }
+    /**
+     * @description check up if object is true (undefined, null, NaN, false, 0, -1)
+     * @param {any} [object]
+     * @returns {boolean}
+    */
+    $.Utils.isTrue = function (object) {
+        return (!($.Utils.isFalse(object))); 
+    }
     /**
      * @desc get index by propriety of object
      * @param {object} object that will be checked
      * @param {string} propriety that will be checked
      * @param {string} value -> that will be found and return to his index;
      */
-    $.Utils.objectIndex = function(object, propriety, value) {
-        object.map(function (element) { return element[propriety];}).indexOf(value);
-    }
+    $.Utils.Object.index = function(object, propriety, value) {
+        object.map(function (element) { 
+            return element[propriety];
+        }).indexOf(value);
+    };
     /**
      * @desc return the next element from 'object'
-     * @param {object} 
+     * @param {object} object
      * @param {string} current keyname
-     * @return {object}
+     * @return {*} 
      */
-    $.Utils.nextObject = function(object, current) {
+    $.Utils.Object.next = function(object, current) {
         var next  = (Object.keys(object).indexOf(current) + 1) % Object.keys(object).length;
         console.log(object[Object.keys(object)[next]], next)
         return object[Object.keys(object)[next]];
@@ -479,9 +552,9 @@ if (typeof String.prototype.clean === 'undefined') {
      * @desc return the previous element from 'object'
      * @param {object} 
      * @param {string} current keyname
-     * @return {object}
+     * @return {*}
      */
-    $.Utils.predObject = function(object, current) {
+    $.Utils.Object.pred = function(object, current) {
         var pred  = (Object.keys(object).indexOf(current) - 1) % Object.keys(object).length;
         return object[Object.keys(object)[pred]];
     }
@@ -492,7 +565,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {boolean} replace replace elements that 'object' have. Default is [true]
      * @return {obejct}
      */
-    $.Utils.merge = function(object, mobject, replace) {
+    $.Utils.Object.merge = function(object, mobject, replace) {
         // replace 
         replace = replace || true;
         // new object
@@ -520,20 +593,163 @@ if (typeof String.prototype.clean === 'undefined') {
         // return to new object based on 'object' and 'mobejct'
         return nobject;
     }
+    /**
+     * @description Iterate through the properties of any object.
+     * @param {Object} [object] Iterate through the properties of any object.
+     * @param {!function(this:scope, keyname, value, index, object)} [callback]
+     * @param {any} [scope] use as scope for 'callback'. If don't set up is by default, the object.
+     * @returns {Object}
+     */
+    $.Utils.Object.each = function(object, callback, scope) {
+        // check out if object is Object
+        if (!($.Utils.isObject(object))) return {};
+        // get each keys
+        this.keys = [];
+        for (kobj in object) { this.keys.push(kobj); }
+        // get into each properties from object
+        let i = this.keys.length;
+        while (i--) {
+            if (object.hasOwnProperty(this.keys[i])) {
+                // check out if is function
+                if ($.Utils.isFunction(callback)) {
+                    callback.apply(
+                        scope || object,
+                        this.keys[i],
+                        object[this.keys[i]],
+                        i, 
+                        object
+                    );
+                }
+            }
+        }
+        // return
+        return object;
+    }
+    /**
+     * @description capitalize [automatic punctuation]
+     * @param {string} [string]
+     * @returns {string}
+     */
+    $.Utils.String.capitalize = function(string) {
+        return string.replace(/(^|\. *)([a-z])/g, function (result, separator, char) {
+            return (separator + char.toUpperCase());
+        });
+    }
+    /**
+     * @description check out if array contain X element
+     * @param {array} [array] 
+     * @param {element} [element]
+     * @returns {boolean}
+     */
+    $.Utils.Array.contain = function(array, element) {
+        return (array.indexOf(element) === -1 ? false : true);
+    }
+    /**
+     * @description get a random element from array
+     * @param {array} [array]
+     * @param {number} [at] (optional, default is 0) 
+     * at the element index until 'end'
+     * @param {number} [end] (optional, default is length) 
+     * until 'end' element index.
+     * @returns {boolean}
+     */
+    $.Utils.Array.random = function(array, at, end) {
+        at = at || 0;
+        end = end || array.length;
+        return array[$.DMath.randInt(at, end - 1)];
+    }
+    /**
+     * @description check up if all element on Array is false. Will only
+     * check out elements that is Boolean type.
+     * This is useful only if the array has elements that isn't boolean type.
+     * Otherwise, you can use the function 'every' from Array. Vanilla method.
+     * @see $.Utils.isBoolean();
+     * @param {array} [array]
+     * @param {*} [scope] by default is [array]
+     * @param {!function(this:scope, array)} [callback]
+     * @returns {Boolean}
+     *  [true] if every value is false
+     *  [false] if isn't
+     */
+    $.Utils.Array.isFalse = function(array, callback, scope) {
+        // get each 'boolean' element
+        this.boolean = [];
+        let i = array.length;
+        while (i--) {
+            if ($.Utils.isBoolean(array[i], -1) !== -1) {
+                this.boolean.push($.Utils.isBoolean(array[i]));
+                callback.call(scope || array, array[i]);
+            } 
+        }
+        // return
+        return this.boolean.every(function (el) { return el === false; })
+    }
+    /**
+     * @description check up if all element on Array is true. Will only
+     * check out elements that is Boolean type.
+     * This is useful only if the array has elements that isn't boolean type.
+     * Otherwise, you can use the function 'every' from Array. Vanilla method.
+     * @see $.Utils.isBoolean();
+     * @param {array} [array]
+     * @param {*} [scope] by default is [array]
+     * @param {!function(this:scope, array)} [callback]
+     * @returns {Boolean}
+     *  [true] if every value is true
+     *  [false] if isn't
+     */
+    $.Utils.Array.isTrue = function(array, callback, scope) {
+        return (!($.Utils.Array.isFalse(array, callback, scope)));
+    }
+    /**
+     * @description expand a array until 'limit' by following the 
+     * 'step' value.
+     * @example 
+     *  Haya.Utils.Array.step(0, 10, 2) // [0, 2, 4, 6, 8, 10];
+     * @param {number} [start]
+     * @param {number} [end]
+     * @param {number} [step] will divide the limit
+     * @param {!function(this:scope, element, start, end, step, array)} [callback] 
+     * @param {*} [scope] by default is [array]
+     * @returns {array}
+     */
+    $.Utils.Array.step = function(start, end, step, callback, scope) {
+        // checkup
+        start = start || 0;
+        step = step || 1;
+        // into
+        for (let array = []; (end - start) * step > 0; start += step) {
+            array.push(start);
+            callback.call(scope || array, array.pop(), start, end, step, array);
+        }
+        return array;
+    }
+    /**
+     * @description get a random color
+     * @return {string} <hex>
+    */
+    $.Utils.Color.random = function() {
+        let random = (Math.random() * 0x1000000 << 0).toString(16);
+        let array = new Array(7 - random.length).join("0") + random;
+        return String("#" + array);
+    }
     // =============================================================================
     /**
      * :dmath
      * @function DMath
      * @memberof Haya
      * @desc tools for calcs
-     */
-    $.DMath = function() { throw new Error('This is a static class'); }
-    /**
+     * 
      * @function Position
      * @memberof DMath
      * @desc tools for positions calcs
+     * 
+     * @function Vector
+     * @memberof DMath
+     * @description Tool for Vector classes
      */
-    $.DMath.Position = function() { throw new Error('This is a static class'); }
+    $.DMath = function() { throw new Error('This is a static class'); };
+    $.DMath.Position = function() { throw new Error('This is a static class'); };
+    $.DMath.Vector = function() { throw new Error('This is a static class'); };
     /**
      * @desc turn value to percent by max
      * @param {number, number, number}
@@ -571,6 +787,69 @@ if (typeof String.prototype.clean === 'undefined') {
         current = (current + $.DMath.rand(0, 2)) + (current + random);
         return (Math.round(current) / 2);
     } 
+    /**
+     * @description catch up the distance between 2 number and return
+     * the absolute value
+     * @param {number} [x]
+     * @param {number} [y]
+     * @returns {number}
+     */
+    $.DMath.distance = function (x, y) {
+        return Math.abs(x - y);
+    }
+    /**
+     * @description Converts from radians to degrees.
+     * @param {number} [radians]
+     * @example 
+     * Haya.DMath.degrees(~1.570) // 90
+     * @returns {number}
+     */
+    $.DMath.degrees = function(radians) { return (radians * 180 / Math.PI); };
+    /**
+     * @description Converts from degrees to radians.
+     * @param {number} [degrees]
+     * @example 
+     * Haya.DMath.radians(90) // ~1.570
+     * @returns {number}
+     */
+    $.DMath.radians = function(degrees) { return (degrees * Math.PI / 180); };
+    /**
+     * @description Iterates over 'start' numeric value until 'end' 
+     * numeric value.
+     * @param {number} [start] initial value, Math.trunc is used
+     * @param {number} [end] end value, Math.trunc is used
+     * @param {*} [scope] used on callback
+     * @param {!function(this:scope, current, start, end, array)} [callback]
+     * @returns {array}
+     */
+    $.DMath.upto = function(start, end, callback, scope) {
+        this.array = [];
+        let i = Math.trunc(start);
+        while (i <= Math.trunc(end)) {
+            this.array.push(i);
+            callback.call(scope || this, i, Math.trunc(start), Math.trunc(end), array);
+        }
+        return this.array;
+    }
+    /**
+     * @description Iterates over 'end' numeric value until 'start' 
+     * numeric value. Reverse of 'upto'
+     * @param {number} [end] end value, Math.trunc is used
+     * @param {number} [limit] end down to until 'limit'
+     * @param {*} [scope] used on callback
+     * @param {!function(this:scope, current, limit, end, array)} [callback]
+     * @returns {array}
+     */
+    $.DMath.downto = function(end, limit, callback, scope) {
+        this.array = [];
+        let i = Math.trunc(end);
+        while (i--) {
+            this.array.push(i);
+            callback.call(scope || this, i, Math.trunc(limit), Math.trunc(end), array);
+            if (i === Math.trunc(limit)) break;
+        }
+        return this.array;
+    }
     /**
      * @desc display object based on screen
      * @param {object} hash that contains:
@@ -654,6 +933,498 @@ if (typeof String.prototype.clean === 'undefined') {
         // return
         return point;
     }
+    /**
+     * @class D2
+     * @classdesc A simple and useful Vector 2D class
+     * @memberof Vector
+     */
+    $.DMath.Vector.D2 = class {
+        /**
+         * @constructor
+         * @param {number} [x] axis
+         * @param {number} [y] axis
+         */
+        constructor (x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        /**
+         * @description sum to another vector class
+         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * add the number toward the x and y axis.
+         * @returns {Vector.D2}
+         */
+        add(vector) {
+            if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
+            if (typeof vector === 'number') { vector = new Point(vector, vector) };
+            return new $.DMath.Vector.D2(this.x + vector.x, this.y + vector.y);
+        }
+        /**
+         * @description substract to another vector class
+         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * add the number toward the x and y axis.
+         * @returns {Vector.D2}
+         */
+        sub(vector) {
+            if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
+            if (typeof vector === 'number') { vector = new Point(vector, vector) };
+            return new $.DMath.Vector.D2(this.x - vector.x, this.y - vector.y);
+        }
+        /**
+         * @description multiply to another vector class
+         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * add the number toward the x and y axis.
+         * @returns {Vector.D2}
+         */
+        mult(vector) {
+            if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
+            if (typeof vector === 'number') { vector = new Point(vector, vector) };
+            return new $.DMath.Vector.D2(this.x * vector.x, this.y * vector.y);
+        }
+        /**
+         * @description divide to another vector class
+         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * add the number toward the x and y axis.
+         * @returns {Vector.D2}
+         */
+        div(vector) {
+            if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
+            if (typeof vector === 'number') { vector = new Point(vector, vector) };
+            vector.x = vector.x === 0 ? 1 : vector.x;
+            vector.y = vector.y === 0 ? 1 : vector.y;
+            return new $.DMath.Vector.D2(this.x / vector.x, this.y / vector.y);
+        }
+        /**
+         * @description get a dot point based on vector
+         * @param {Vector.D2|Point|Array} [vector]
+         * @returns {numeric}
+         */
+        dot(vector) {
+            if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
+            if (typeof vector === 'numeric') { vector = new Point(vector, vector) };
+            return this.x * vector.x + this.y * vector.y;
+        }
+        /**
+         * @description get the length
+         */
+        length() {
+            return Math.sqrt(this.dot(this));
+        }
+        /**
+         * @description check up if is equals toward another
+         * vector
+         * @param {Vector.D2} [vector] 
+         * @returns {Boolean}
+         */
+        equals(vector) {
+            if (vector instanceof $.DMath.Vector.D2) {
+                return (this.x === vector.x && this.y === vector.y);
+            }
+            return false;
+        }
+        /**
+         * @description get the magnitude value from axis position
+         * @returns {numeric}
+         */
+        magnitude() {
+            return (Math.sqrt((this.x * this.x) + (this.y * this.y)));
+        }
+        /**
+         * @description normalize the axis scale
+         * @returns {boolean}
+         */
+        normalize() {
+            if (this.x === 0 || this.y === 0) return false;
+            length = this.magnitude();
+            this.x /= length;
+            this.y /= length;
+            return true;
+        }
+        /**
+         * @description get a new Vector.D2 based on
+         * normalize value
+         * @returns {Vector.D2}
+         */
+        normalized() {
+            return (new $.DMath.Vector.D2(this.x, this.y).normalize());
+        }
+        /**
+         * @description scale the value
+         * @param {Point|Vector.D2|Array} [sc] anything that has '.x' and '.y'
+         * or a array with two elements.
+         */
+        scale(sc) {
+            if ($.Utils.isArray(sc)) {
+                sc = new Point(sc.shift(), sc.pop());
+            }
+            this.x *= sc.x;
+            this.y *= sc.y;
+        }
+        /**
+         * @description set a new axis value
+         * @param {Point|Vector.D2|Array} [sc] anything that has '.x' and '.y'
+         * or a array with two elements.
+         */
+        set(sc) {
+            if ($.Utils.isArray(sc)) {
+                sc = new Point(sc.shift(), sc.pop());
+            }
+            this.x = sc.x;
+            this.y = sc.y;
+        }
+        /**
+         * @description clone the class
+         * @returns {Vector.D2}
+         */
+        clone() {
+            return (new $.DMath.Vector.D2(this.x, this.y));
+        }
+        /**
+         * @description return a perpendicular vector class
+         * @returns {Vector.D2} 
+         */
+        perpendicular() {
+            return (new $.DMath.Vector.D2(this.y, -(this.x)));
+        }
+        /**
+         * @description get the negative version of this vector class
+         * @returns {Vector.D2} 
+         */
+        negative() {
+            return new $.DMath.Vector.D2(-this.x, -this.y);
+        }
+        /**
+         * @description to angles
+         * @returns {numeric}
+         */
+        toa() {
+            return -Math.atan2(-this.y, this.x);
+        }
+        /**
+         * @description get angles into
+         * @param {Vector.D2} [vector]
+         * @returns {numeric}
+         */
+        ato(vector) {
+            return Math.acos(this.dot(vector) / (this.length() * vector.length()));
+        }
+    }
+    /**
+     * @description return the angle between 2 vector 2d.
+     * @param {Vector.D2} [to]
+     * @param {Vector.D2} [from]
+     * @returns {Numeric}
+     */
+    $.DMath.Vector.angle2d = function (to, from) {
+        return $.DMath.degrees(Math.atan2(to.y - from.y, to.x - from.x));
+    }
+    /**
+     * @description compare to vector 2d class and return with
+     * the minimum value
+     * @param {Vector.D2} [from]
+     * @param {Vector.D2} [to]
+     * @returns {Vector.D2}
+     */
+    $.DMath.Vector.min2d = function (from, to) {
+        return (new $.DMath.Vector.D2(
+            Math.min(from.x, to.x),
+            Math.min(from.y, to.y)
+        ));
+    }
+    /**
+     * @description compare to vector 2d class and return with
+     * the maximum value
+     * @param {Vector.D2} [from]
+     * @param {Vector.D2} [to]
+     * @returns {Vector.D2}
+     */
+    $.DMath.Vector.max2d = function (from, to) {
+        return (new $.DMath.Vector.D2(
+            Math.max(from.x, to.x),
+            Math.max(from.y, to.y)
+        ));
+    }
+    /**
+     * @description get the cross product between two vector 2d class
+     * @see https://en.wikipedia.org/wiki/Cross_product
+     * @param {Vector.D2} [from]
+     * @param {Vector.D2} [to]
+     * @returns {Numeric}
+     */
+    $.DMath.Vector.cross2d = function (from, to) {
+        return from.x * to.y - from.y * to.x;
+    }
+    /**
+     * @description get the dot product between two vector 2d class
+     * @see https://en.wikipedia.org/wiki/Dot_product
+     * @param {Vector.D2} [from]
+     * @param {Vector.D2} [to]
+     * @returns {Numeric}
+     */
+    $.DMath.Vector.dot2d = function (from, to) {
+        return from.x * to.x + from.y * to.y;
+    }
+    /**
+     * @see https://github.com/evanw/lightgl.js/blob/master/src/vector.js
+     * @class
+     * @classdesc A simple and useful vector 3d class
+     * @memberof Vector
+     */
+    $.DMath.Vector.D3 = class {
+        /**
+         * @constructor 
+         * @param {number} [x] axis
+         * @param {number} [y] axis
+         * @param {number} [z] depth
+         */
+        constructor (x, y, z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+        /**
+         * @description return a new vector 3d class based
+         * on negative values
+         * @returns {Vector.D3} 
+         */
+        negative() {
+            return new $.DMath.Vector.D3(-this.x, -this.y, -this.z);
+        }
+        /**
+         * @description add values (sum) into this class
+         * based on another vector class
+         * @param {Vector.D3|Number} [vector]
+         * @returns {Vector.D3}
+         */
+        add(vector) {
+            if (vector instanceof $.DMath.Vector.D3) {
+                return new $.DMath.Vector.D3(this.x + vector.x, this.y + vector.y, this.z + vector.z);
+            } else if (typeof vector === 'number') {
+                return new $.DMath.Vector.D3(this.x + vector, this.y + vector, this.z + vector);
+            } else {
+                this;
+            }
+        }
+        /**
+         * @description subtract values (sum) into this class
+         * based on another vector class
+         * @param {Vector.D3|Number} [vector]
+         * @returns {Vector.D3}
+         */
+        sub(vector) {
+            if (vector instanceof $.DMath.Vector.D3) {
+                return new $.DMath.Vector.D3(this.x - vector.x, this.y - vector.y, this.z - vector.z);
+            } else if (typeof vector === 'number') {
+                return new $.DMath.Vector.D3(this.x - vector, this.y - vector, this.z - vector);
+            } else {
+                this;
+            }
+        }
+        /**
+         * @description multiply values (sum) into this class
+         * based on another vector class
+         * @param {Vector.D3|Number} [vector]
+         * @returns {Vector.D3}
+         */
+        mult(vector) {
+            if (vector instanceof $.DMath.Vector.D3) {
+                return new $.DMath.Vector.D3(this.x * vector.x, this.y * vector.y, this.z * vector.z);
+            } else if (typeof vector === 'number') {
+                return new $.DMath.Vector.D3(this.x * vector, this.y * vector, this.z * vector);
+            } else {
+                this;
+            }
+        }
+        /**
+         * @description divide values (sum) into this class
+         * based on another vector class
+         * @param {Vector.D3|Number} [vector]
+         * @returns {Vector.D3}
+         */
+        div(vector) {
+            if (vector instanceof $.DMath.Vector.D3) {
+                vector.x = vector.x === 0 ? 1 : vector.x;
+                vector.y = vector.y === 0 ? 1 : vector.y;
+                vector.z = vector.x === 0 ? 1 : vector.z;
+                return new $.DMath.Vector.D3(this.x / vector.x, this.y / vector.y, this.z / vector.z);
+            } else if (typeof vector === 'number') {
+                vector = vector === 0 ? 1 : vector;
+                return new $.DMath.Vector.D3(this.x / vector, this.y / vector, this.z / vector);
+            } else {
+                this;
+            }
+        }
+        /**
+         * @description check out if the values is equal to another
+         * vector class
+         * @param {Vector.D3} [vector]
+         * @returns {Boolean}
+         */
+        equals(vector) {
+            return this.x == vector.x && this.y == vector.y && this.z == vector.z;
+        }
+        /**
+         * @description get the dot product based on another vector
+         * @param {Vector.D3} [vector]
+         * @returns {Number}
+         */ 
+        dot(vector) {
+            return this.x * vector.x + this.y * vector.y + this.z * vector.z;
+        }
+        /**
+         * @description get the cross product based on another vector
+         * @param {Vector.D3} [vector]
+         * @returns {Vector.D3}
+         */
+        cross(vector) {
+            return new $.DMath.Vector.D3(
+                this.y * vector.z - this.z * vector.y,
+                this.z * vector.x - this.x * vector.z,
+                this.x * vector.y - this.y * vector.x
+            );
+        }
+        /**
+         * @description get the length from this class
+         * @returns {Number}
+         */
+        length() {
+            return Math.sqrt(this.dot(this));
+        }
+        /**
+         * @description unit all values from this class into
+         * one
+         * @returns {Vector.D3}
+         */
+        unit() {
+            return (this.div(this.length()));
+        }
+        /**
+         * @description get the minimum value based on z
+         * @returns {Number}
+         */
+        min() {
+            return Math.min(Math.min(this.x, this.y), this.z);
+        }
+        /**
+         * @description get the maximum value based on z
+         * @returns {Number}
+         */
+        max() {
+            return Math.max(Math.max(this.x, this.y), this.z);
+        }
+        /**
+         * @description get the phi angle
+         * @returns {Number}
+         */
+        phi() {
+            return Math.asin(this.y / this.length());
+        }
+        /**
+         * @description get the theta angle
+         * @returns {Number}
+         */
+        theta() {
+            return Math.atan2(this.z, this.x);
+        }
+        /**
+         * @description angle into... based on another vector
+         * @returns {Number}
+         */
+        ato(vector) {
+            return Math.acos(this.dot(vector) / (this.length() * vector.length()));
+        } 
+        /**
+         * @description clone this class
+         * @returns {Vector.D3}
+         */
+        clone() {
+            new $.DMath.Vector.D3(this.x, this.y, this.z);
+        }
+    }
+    /**
+     * @description cross produtc between vector 3d class
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @param {Vector.D3} [c]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.cross3d = function (a, b, c) {
+        c.x = a.y * b.z - a.z * b.y;
+        c.y = a.z * b.x - a.x * b.z;
+        c.z = a.x * b.y - a.y * b.x;
+        return c;
+    }
+    /**
+     * @description unifique values
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.unit3d = function (a, b) {
+        let length = a.length();
+        b.x = a.x / length;
+        b.y = a.y / length;
+        b.z = a.z / length;
+        return b;
+    }
+    /**
+     * @description create a vector based on angles
+     * @param {Number} [theta]
+     * @param {Number} [phi]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.fangle3d = function (theta, phi) {
+        return new $.DMath.Vector.D3(
+            Math.cos(theta) * Math.cos(phi), 
+            Math.sin(phi), 
+            Math.sin(theta) * Math.cos(phi));
+    }
+    /**
+     * @description create a random vector based on angles
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.rand3d = function () {
+        return $.DMath.Vector.fangle3d(Math.random() * Math.PI * 2, Math.asin(Math.random() * 2 - 1));
+    }
+    /**
+     * @description create a vector based on minimum value between two 
+     * vectors
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.min3d = function (a, b) {
+        return new Vector(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
+    }
+    /**
+     * @description create a vector based on maximum value between two 
+     * vectors
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.max3d = function (a, b) {
+        return new Vector(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
+    }
+    /**
+     * @description Linearly interpolates between two vectors.
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @param {Number} [fraction] nterpolates between from and to by amount 'fraction'.
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.lerp = function (a, b, fraction) {
+        return b.sub(a).mult(fraction).add(a);
+    }
+    /**
+     * @description between angles of two vectors
+     * @param {Vector.D3} [a]
+     * @param {Vector.D3} [b]
+     * @returns {Vector.D3}
+     */
+    $.DMath.Vector.bangle = function (a, b) {
+        return a.ato(b);
+    }
     // ============================================================================= 
     // [TouchInput] :touch
     // =============================================================================
@@ -730,126 +1501,68 @@ if (typeof String.prototype.clean === 'undefined') {
         }
     }
     // =============================================================================
-    /**
+    /** 
      * :sprite
-     * @function SpriteObject
-     * @class SpriteObject
-     * @memberof PIXI.Container
-     * @description make more easier display picture or text toward scene
-     */
-    $.SpriteObject = class extends PIXI.Container {
+     * @class 
+     * @function Base
+     * @memberof $.Pixi.Sprite
+     * @classdesc Base class for 'Sprite' manager based on PIXI.
+    */
+    $.Pixi.Sprite.Base = class extends PIXI.Container {
         /**
-         * @param {object} hash that contains
-         *      {string} type: [text, picture or graphic, default is picture],
-         *      {PIXI.Texture} texture: [just if the type is "picture"],
-         *      {object} graphic: [if type is "graphic"],
-         *          {string} type: ["circle", "rect"],
-         *          {hex, string} bfill: [beginFill],
-         *          {number} x, y, width, height: [dimensions],
-         *          {number} radius: [if is circle]
-         *      {string} text: [first text value, if the type is "texture"],
-         *      {class} stage: [place where this sprite will be add on child, for default is SceneManger._scene]
-         * @param {function} callback to setup
-         */
-        constructor(hash, callback) {
-            super.constructor();
-            this.hash = hash;
+         * @constructor
+         * @param {stage} stage 
+         *  [setup here what stage function will take in your children, default: current scene]
+         * @param {function} callback
+         *  [calls after the load]
+        */
+        constructor(stage, callback) {
+            this.stage = stage || SceneManager._scene;
             this.callback = callback;
             this.setup();
             this.load();
             if ($.Utils.isFunction(this.callback)) this.callback.apply(this, arguments);
         }
         /**
-         * @desc default setup and mouse setup
+         * @function setup
+         * @description default setup of sprite
          */
         setup() {
-            // default setup
-            this._x = this.hash.x || 0;
-            this._y = this.hash.y || 0;
+            this._x = 0; this._y = 0;
             this._loaded = false;
             this._update = null;
-            // mouse setup
-            this.mouse = ({
-                x: 0,
-                y: 0,
-                active: false,
-                over: null,
-                out: null, 
+            this.mouse = {
+                x: 0, y: 0, active: false,
+                over: null, out: null, 
                 trigger: {on: null, off: null},
                 press: {on: null, off: null},
                 repeat: {on: null, off: null},
-                drag: {active: false, start: false, function: null}
-            });
+                drag: {active: false, start: false, on: null}
+            };
         }
         /**
-         * @description load texture
+         * @function load
+         * @description load the sprite.
          */
         load() {
-            // type | default is 'picture'
-            this.hash.type = this.hash.type || "picture";
-            // condition
-            if (this.hash.type === "picture") {
-                // default sprite
-                this.sprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
-                // there is texture?
-                if (this.hash.texture) {
-                    this.sprite.texture = this.hash.texture;
-                }
-            } else if (this.hash.type === "text") {
-                // default sprite
-                this.sprite = new PIXI.Text("");
-                this.sprite.text = this.hash.text || "";
-            } else if (this.hash.type === "graphic") {
-                // default
-                this.hash.graphic = this.hash.graphic || {};
-                this.hash.graphic.type = this.hash.graphic.type || "rect";
-                this.hash.graphic.bfill = this.hash.graphic.bfill || 0xFFFFFF;
-                this.hash.graphic.alpha = this.hash.graphic.alpha || 1;
-                this.hash.graphic.x = this.hash.graphic.x || 0;
-                this.hash.graphic.y = this.hash.graphic.y || 0;
-                this.hash.graphic.width = this.hash.graphic.width || 96;
-                this.hash.graphic.height = this.hash.graphic.height || 96;
-                this.hash.graphic.radius = this.hash.graphic.radius || 32;
-                // draw
-                this.sprite = new PIXI.Graphics();
-                this.sprite.beginFill(this.hash.graphic.bfill, this.hash.graphic.alpha);
-                // type
-                if (this.hash.graphic.type === "rect") {
-                    this.sprite.drawRect(
-                        this.hash.graphic.x, this.hash.graphic.y,
-                        this.hash.graphic.width, this.hash.graphic.height
-                    )
-                } else if (this.hash.graphic.type === "circle") {
-                    this.sprite.drawCircle(
-                        this.hash.graphic.x,
-                        this.hash.graphic.y,
-                        this.hash.graphic.radius
-                    )
-                }
-            }
-            // stage | default is 'scene'
-            this.hash.stage = this.hash.stage || SceneManager._scene;
-            this.hash.stage.addChild(this.sprite);
-            // setup sprite
-            this.sprite.x = this._x;
-            this.sprite.y = this._y;
+            // after load
+            this.stage.addChild(this.sprite);
             this.sprite.renderable = true;
-            this.sprite.visible = true;
             this.sprite.hitArea = new PIXI.Rectangle(this.sprite.x, this.sprite.y, this.sprite.width, this.sprite.height);
-            // loaded
             this._loaded = true;
         }
         /**
-         * @desc dispose element
-         * @param {boolean} destroy texture
+         * @function dispose
+         * @description destroy the sprite
          */
-        dispose(destroy) { 
+        dispose(destroy) {
             if (this._loaded) {
                 this.sprite.destroy(destroy);  
-            } 
+            }
         }
         /**
-         * @description update sprite
+         * @function update
+         * @description update the sprite
          */
         update() {
             // return if is not loaded
@@ -862,22 +1575,21 @@ if (typeof String.prototype.clean === 'undefined') {
             // render
             this.sprite.updateTransform();
             Graphics.render(this.sprite);
-            // check out if the mouse will be used on
-            // check out if is visible
-            if (this.sprite.visible === true) {
-                if (this.mouse.active) {
-                    // get the mouse position
-                    this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
-                    this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
-                    this.updateMouse();
-                }
+            // check up if the mouse is active and the sprite is visible
+            if (this.sprite.visible && this.mouse.active) {
+                // get the mouse position
+                this.mouse.x = Graphics.pageToCanvasX(TouchInput.x);
+                this.mouse.y = Graphics.pageToCanvasY(TouchInput.y);
+                this.updateMouse();
             }
             // _update
             if ($.Utils.isFunction(this._update)) this._update.apply(this, arguments);
         }
         /**
-         * @desc display this sprite based on screen
-         * @param {string} type see on $.DMath.Position.screen
+         * @function position
+         * @description display the sprite toward the screen based on $.DMath.Position.screen
+         * @see $.DMath.Position.screen
+         * @param {string, number} type
          */
         position(type) {
             let _position = $.DMath.Position.screen({type: type, object: this.sprite});
@@ -885,8 +1597,9 @@ if (typeof String.prototype.clean === 'undefined') {
             this.sprite.y = _position.y;
         }
         /**
-         * @desc invert sprite
-         * @param {boolean} type 
+         * @function mirror
+         * @description invert sprite (x or y)
+         * @param {boolean} type
          *  [true] will invert by X axis
          *  [false] will invert by Y axis
          * @param {number} point to anchor set 
@@ -903,8 +1616,9 @@ if (typeof String.prototype.clean === 'undefined') {
             }
         }
         /**
-         * @description check out if mouse is over sprite
-         * @return {Boolean} 
+         * @function mouseOver
+         * @description check out if mouse is over sprite (based on hitArea)
+         * @returns {Boolean} 
          */
         mouseOver() {
             if (!Graphics.isInsideCanvas(this.mouse.x, this.mouse.y)) return false;
@@ -916,78 +1630,161 @@ if (typeof String.prototype.clean === 'undefined') {
             return false; 
         }
         /**
-         * @description update mouse 
+         * @function updateMouse
+         * @description update the mouse functions if is active
          */
         updateMouse() {
             // check out if the mouse is over or not
             if (this.mouseOver()) {
                 // function that will be call
-                if (typeof this.mouse.over === 'function') this.mouse.over.apply(this);
+                if ($.Utils.isFunction(this.mouse.over)) this.mouse.over.apply(this);
                 // check out if was triggered inside
-                if (TouchInput.isTriggered()) 
-                    if (typeof this.mouse.trigger.on === 'function') this.mouse.trigger.on.apply(this);
+                if (TouchInput.isTriggered() && $.Utils.isFunction(this.mouse.trigger.on)) this.mouse.trigger.on.apply(this);
                 // check out if was pressed inside
                 if (TouchInput.isLongPressed()) {
                     if (!this.mouse.drag.active) {
-                        if (typeof this.mouse.press.on === 'function') this.mouse.press.on.apply(this);
+                        if ($.Utils.isFunction(this.mouse.press.on)) this.mouse.press.on.apply(this);
                     } else {
-                        if (typeof this.mouse.drag.function === 'function') this.mouse.drag.function.apply(this);
+                        if ($.Utils.isFunction(this.mouse.drag.on)) this.mouse.drag.on.apply(this);
                         this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
                         this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
                     }
                 } else {
-                if (this.mouse.drag.active)  this.mouse.drag.start = false;
+                    if (this.mouse.drag.active)  this.mouse.drag.start = false;
                 }
                 // check out if was repeated inside
-                if (TouchInput.isRepeated())
-                    if (typeof this.mouse.repeat.on === 'function') this.mouse.repeat.on.apply(this);
+                if (TouchInput.isRepeated() && $.Utils.isFunction(this.mouse.repeat.on)) this.mouse.repeat.on.apply(this);
             } else {
                 // function that will be call
-                if (typeof this.mouse.out === 'function') this.mouse.out.apply(this);
+                if ($.Utils.isFunction(this.mouse.out)) this.mouse.out.apply(this);
                 // check out if was triggered inside
-                if (TouchInput.isTriggered()) 
-                    if (typeof this.mouse.trigger.off === 'function') this.mouse.trigger.off.apply(this);
+                if (TouchInput.isTriggered() && $.Utils.isFunction(this.mouse.trigger.off)) this.mouse.trigger.off.apply(this);
                 // check out if was pressed inside
-                if (TouchInput.isLongPressed())
-                    if (typeof this.mouse.press.off === 'function') this.mouse.press.off.apply(this);
+                if (TouchInput.isLongPressed() && $.Utils.isFunction(this.mouse.press.off)) this.mouse.press.off.apply(this);
                 // check out if was repeated inside
-                if (TouchInput.isRepeated())
-                    if (typeof this.mouse.repeat.off === 'function') this.mouse.repeat.off.apply(this);
+                if (TouchInput.isRepeated() && $.Utils.isFunction(this.mouse.repeat.off)) this.mouse.repeat.off.apply(this);
             }
         }
     }
+    /**
+     * :picture
+     * @class
+     * @function Picture
+     * @memberof $.Pixi.Sprite
+     * @classdesc class to manager picture pixi based on $.Pixi.Sprite.Base
+     */
+    $.Pixi.Sprite.Picture = class extends $.Pixi.Sprite.Base {
+        /**
+         * @constructor
+         * @param {object} hash
+         *  {stage} stage: stage that will get this children
+         *  {texture} texture: texture to display 
+         * @param {function} callback
+         *  [calls after the load]
+         */
+        constructor(hash, callback) {
+            this.hash = hash;
+            super.constructor.call(this, this.hash.stage, callback);
+        }
+        /**
+         * @function load
+         * @description load the texture
+         */
+        load() {
+            this.sprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
+            // there is texture?
+            if (this.hash.texture) this.sprite.texture = this.hash.texture;
+            // after load
+            super.load.call(this);
+        }
+    }
+    /**
+     * :text
+     * @class
+     * @function Text
+     * @memberof $.Pixi.Sprite
+     * @classdesc class to manager text pixi based on $.Pixi.Sprite.Base
+     */
+    $.Pixi.Sprite.Text = class extends $.Pixi.Sprite.Base {
+        /**
+         * @constructor
+         * @param {object} hash
+         *  {stage} stage: stage that will get this children
+         *  {string} text: initial text to display
+         *  {object} style: style of text
+         * @param {function} callback
+         *  [calls after the load]
+         */
+        constructor(hash, callback) {
+            this.hash = hash;
+            this._text = "";
+            super.constructor.call(this, this.hash.stage, callback);
+        }
+        /**
+         * @function load
+         * @description load the texture
+         */
+        load() {
+            this.sprite = new PIXI.Text(this.hash.text || "");
+            if ($.Utils.isObject(this.hash.style)) this.sprite.style = this.hash.style;
+            // after load
+            super.load.call(this);
+        }
+    }
+    /**
+     * :rect
+     * @class 
+     * @function Graphic
+     * @memberof $.Pixi.Sprite
+     * @classdesc class to manager Graphic pixi based on $.Pixi.Sprite.Base
+     */
+    $.Pixi.Sprite.Graphic = class extends $.Pixi.Sprite.Base {
+        /**
+         * @constructor
+         * @param {object} hash
+         *  {stage} stage: stage that will get this children
+         *  {string} type: type of graphic. 'circle', 'rect'
+         *  {color} bfill: beginFill
+         *  {number} x: axis position graphic X
+         *  {number} y: axis position graphic Y
+         *  {number} width: size of width
+         *  {number} height: size of height
+         *  {number} alpha: alpha of graphic, default is 1
+         *  {number} radius: radius to circle
+         * @param {function} callback
+         *  [calls after the load]
+         */
+        constructor(hash, callback) {
+            this.hash = hash;
+            this.hash.type = this.hash.type || "rect";
+            super.constructor.call(this, this.hash.stage, callback);
+        }
+        /**
+         * @function load
+         * @description load the texture
+         */
+        load() {
+            // rect
+            if (this.hash.type === "rect") {
+                this.sprite = new PIXI.Graphics();
+                this.sprite.beginFill(this.hash.bfill || 0xDDDDDD, this.hash.alpha || 1);
+                this.sprite.drawRect(
+                    this.hash.x || 0, this.hash.y || 0,
+                    this.hash.width || 96, this.hash.height || 24
+                )
+            } else if (this.hash.type === "circle") {
+                this.sprite = new PIXI.Graphics();
+                this.sprite.beginFill(this.hash.bfill || 0xDDDDDD, this.hash.alpha || 1);
+                this.sprite.drawCircle(
+                    this.hash.x || 0, this.hash.y || 0,
+                    this.hash.radius || 6
+                )
+            }
+            // after load
+            super.load.call(this);
+        }
+    }
     // =============================================================================
-    /**
-     * :tool
-     * @description shortcuts toward some functions
-     * @var Haya
-     */
-    
-    /**
-     * @desc create sprite based on picture
-     * @param {class} texture PIXI.Texture: texture that you can get using $.Pixi.Manager.cache
-     * @param {object} hash setup elements 'see $.SpriteObject'
-     * @param {function} callback setup callback function
-     * @return {class} return $.SpriteObject class.
-     */
-    $.Picture = function(texture, hash, callback) {
-        hash = hash || {};
-        hash.type = "picture";
-        hash.texture = texture;
-        return (new $.SpriteObject(hash, callback));
-    }
-    /**
-     * @desc create text spriteObject
-     * @param {string} text that will be the first value to display
-     * @param {object} hash setup elements 'see $.SpriteObject'
-     * @param {function} callback setup callback function
-     * @return {class} return $.SpriteObject class.
-     */
-    $.Text = function(text, hash, callback) {
-        hash = hash || {};
-        hash.type = "text";
-        hash.text = text;
-        return (new $.SpriteObject(hash, callback));
-    }
+
 })(Haya);
 Imported["Haya"] = true;
