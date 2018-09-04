@@ -1,31 +1,51 @@
 
 /**
- * @file Ulse | Ultimate Sensor Event
+ * @file [Ulse | Ultimate Sensor Event]
  * @author Dax Soft | Kvothe <www.dax-soft.weebly> / <dax-soft@live.com>
- * @version 1.6.1
+ * @version 1.7.0
  * @license Haya <https://dax-soft.weebly.com/legal.html>
+ * @tutorial https://dax-soft.weebly.com/ulse---mv.html
  */
-
+var Imported = Imported || {};
+var Haya = Haya || {};
+Haya.Ulse = {};
 /*:
  * @author Dax Soft  | Kvothe
  * 
- * @plugindesc Ultimate Sensor Event [1.6.1]
+ * @plugindesc Ultimate Sensor Event [1.7.0]
  * 
  * @help
- * System of sensor. Used to make the npc detect your presence — of the player.
- * Very useful to stealth games: In which the player must keep your presence 
- * hidden, to continue.
- * Support sensor between events.
+ * [Sensor]: You can use this plugin to make the npc detect the 
+ * presence of the player or of another npc! 
+ * 
+ * [Example]: Useful in the creation of stealth elements, in which
+ * the player must keep his presence hidden to advance.
+ * 
+ * [Support]:
+ *  - Sensor between player and npc.
+ *  - Sensor between npcs.
+ * 
+ * [How it Works]: 
+ * Any command will only be checked if the player (or npc) is
+ * on a range of 20 tiles. This way will the performance will get 
+ * better. You change the value at will, just hit Ctrl+F and 
+ * type 'RangeLimit'. By default will return to 'false', if the player
+ * or npc isn't in this range. You can change it as well.
+ * 
+ * [Tutorial]: Check out on the link below
+ *  https://dax-soft.weebly.com/ulse---mv.html
  * ===========================================================================
- * List of code to use on 'script' paramater:
- * ===========================================================================
- * ** range {number} : by tile quantity
- * ** target {number} : -1 -> Player | 0 -> local event | x -> id of another 
- * event
- * ** type {string} : see below:
- * Command to use:
- * this.sensor(type, range, target) 
+ * List of code to use on 'script' paramater: [this¹.sensor] ...
+ *  this.sensor(type, range, target) 
  *  example: this.sensor("area", 5, -1) (or) this.sensor("a", 5, -1)
+ *  ¹ : [this] is the trigger command to call the function by the event.
+ * You can use other way to trigger the command as well, by it is recommended
+ * that you this way :)
+ * ===========================================================================
+ * [range] {number} : by tile quantity
+ * [target] {number} : -1 -> Player | 0 -> local event | x -> id of another 
+ * event
+ * [type] {string} : see below 
  * ===========================================================================
  * type: {string}
  *  "area"|"a": Check out by square area
@@ -60,35 +80,36 @@
  *  "full-back"|"fb": Sensor on full field of vision (on backs)
  * ===========================================================================
 */
-
-/**
- * @var Imported
- * @desc valid import 
- */
-var Imported = Imported || {};
-
-/**
- * @var Ulse
- * @desc global variable of script
- */
-var Ulse = Ulse || {};
-
 (function ($) {
-'use strict';
+    'use strict';
+    /**
+     * @var $.RangeLimit
+     * @description Limit of tiles distance. If the player or npc is not
+     * in this limit, the condition will not be checked!
+     * @default 20
+     */
+    $.RangeLimit = 20;
+    /**
+     * @var $.RangeReturn
+     * @description If the player or npc isn't in the range limit, this value
+     * will be returned
+     * @default false 
+     */
+    $.RangeReturn = false;
     // ============================================================================
     /**
      * :gameCharacter
      * @class Game_Character
      * @classdesc addons toward this class
      * @memberof Game_CharacterBase
-     */
+    */
 
     /**
      * @desc check out if the target of sensor is valid
      * @param {Game_Character} target
      * @returns {boolean}
-     */
-    Game_Character.prototype.sensorTargetValid = function(target) {
+    */
+    Game_Character.prototype.sensorTargetValid = function (target) {
         if (target === undefined || target === null) return false;
         if (!(target instanceof Game_Character)) return false;
         return true;
@@ -99,12 +120,12 @@ var Ulse = Ulse || {};
      * @param {number} range 
      * @param {Game_Character} target 
      * @returns {boolean}
-     */
-    Game_Character.prototype.sensorArea = function(range, target) {
+    */
+    Game_Character.prototype.sensorArea = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // return
-        return ( (Math.abs(target._x - this._x) + Math.abs(target._y - this._y)) <= Math.abs(range) );
+        return ((Math.abs(target._x - this._x) + Math.abs(target._y - this._y)) <= Math.abs(range));
     }
 
     /**
@@ -112,11 +133,11 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorOn = function(target) {
+    Game_Character.prototype.sensorOn = function (target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // return
-        return ( this.pos(target.x, target.y) );
+        return (this.pos(target.x, target.y));
     }
 
     /**
@@ -126,7 +147,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean}
      */
-    Game_Character.prototype.sensorRight = function(range, target) {
+    Game_Character.prototype.sensorRight = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
@@ -149,7 +170,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean}
      */
-    Game_Character.prototype.sensorLeft = function(range, target) {
+    Game_Character.prototype.sensorLeft = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
@@ -172,7 +193,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorFront = function(range, target) {
+    Game_Character.prototype.sensorFront = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
@@ -194,7 +215,7 @@ var Ulse = Ulse || {};
      * @param {number} range 
      * @param {Game_Character} target 
      */
-    Game_Character.prototype.sensorAgo = function(range, target) {
+    Game_Character.prototype.sensorAgo = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
@@ -217,12 +238,12 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorCross = function(range, target) {
+    Game_Character.prototype.sensorCross = function (range, target) {
         // return if any is true
         return (
-            this.sensorAgo(range, target)   || 
+            this.sensorAgo(range, target) ||
             this.sensorFront(range, target) ||
-            this.sensorLeft(range, target)  ||
+            this.sensorLeft(range, target) ||
             this.sensorRight(range, target)
         );
     }
@@ -233,7 +254,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorVision = function(range, target) {
+    Game_Character.prototype.sensorVision = function (range, target) {
         switch (this.direction()) {
             case 2: return (this.sensorFront(range, target));
             case 4: return (this.sensorLeft(range, target));
@@ -249,7 +270,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorBack = function(range, target) {
+    Game_Character.prototype.sensorBack = function (range, target) {
         switch (this.direction()) {
             case 8: return (this.sensorFront(range, target));
             case 6: return (this.sensorLeft(range, target));
@@ -265,7 +286,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorLeftArm = function(range, target) {
+    Game_Character.prototype.sensorLeftArm = function (range, target) {
         switch (this.direction()) {
             case 4: return (this.sensorFront(range, target));
             case 8: return (this.sensorLeft(range, target));
@@ -281,7 +302,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorRightArm = function(range, target) {
+    Game_Character.prototype.sensorRightArm = function (range, target) {
         switch (this.direction()) {
             case 4: return (this.sensorFront(range, target));
             case 2: return (this.sensorLeft(range, target));
@@ -297,14 +318,14 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorTopLeft = function(range, target) {
+    Game_Character.prototype.sensorTopLeft = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
         var _switch = _switch || false;
         // check out
         for (let i = 0; i < Math.floor(range) + 1; i++) {
-            if ( (target._x === (this._x - i)) && (target._y === (this._y - i)) ) _switch = true;
+            if ((target._x === (this._x - i)) && (target._y === (this._y - i))) _switch = true;
         }
         // return
         return _switch;
@@ -316,14 +337,14 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorTopRight = function(range, target) {
+    Game_Character.prototype.sensorTopRight = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
         var _switch = _switch || false;
         // check out
         for (let i = 0; i < Math.floor(range) + 1; i++) {
-            if ( (target._x === (this._x + i)) && (target._y === (this._y - i)) ) _switch = true;
+            if ((target._x === (this._x + i)) && (target._y === (this._y - i))) _switch = true;
         }
         // return
         return _switch;
@@ -335,14 +356,14 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorBottomRight = function(range, target) {
+    Game_Character.prototype.sensorBottomRight = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
         var _switch = _switch || false;
         // check out
         for (let i = 0; i < Math.floor(range) + 1; i++) {
-            if ( (target._x === (this._x + i)) && (target._y === (this._y + i)) ) _switch = true;
+            if ((target._x === (this._x + i)) && (target._y === (this._y + i))) _switch = true;
         }
         // return
         return _switch;
@@ -354,14 +375,14 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorBottomLeft = function(range, target) {
+    Game_Character.prototype.sensorBottomLeft = function (range, target) {
         // check out target
         if (this.sensorTargetValid(target) === false) return false;
         // variable
         var _switch = _switch || false;
         // check out
         for (let i = 0; i < Math.floor(range) + 1; i++) {
-            if ( (target._x === (this._x - i)) && (target._y === (this._y + i)) ) _switch = true;
+            if ((target._x === (this._x - i)) && (target._y === (this._y + i))) _switch = true;
         }
         // return
         return _switch;
@@ -373,12 +394,12 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorDiagonal = function(range, target) {
+    Game_Character.prototype.sensorDiagonal = function (range, target) {
         // return if any is true
         return (
-            this.sensorTopLeft(range, target)       || 
-            this.sensorTopRight(range, target)      ||
-            this.sensorBottomLeft(range, target)    ||
+            this.sensorTopLeft(range, target) ||
+            this.sensorTopRight(range, target) ||
+            this.sensorBottomLeft(range, target) ||
             this.sensorBottomRight(range, target)
         );
     }
@@ -389,12 +410,12 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorDiagonalVision = function(range, target) {
+    Game_Character.prototype.sensorDiagonalVision = function (range, target) {
         switch (this.direction()) {
-            case 2: return (this.sensorBottomLeft(range, target)    || this.sensorBottomRight(range, target));
-            case 4: return (this.sensorTopLeft(range, target)       || this.sensorBottomLeft(range, target));
-            case 6: return (this.sensorBottomRight(range, target)   || this.sensorTopRight(range, target));
-            case 8: return (this.sensorTopLeft(range, target)       || this.sensorTopRight(range, target));
+            case 2: return (this.sensorBottomLeft(range, target) || this.sensorBottomRight(range, target));
+            case 4: return (this.sensorTopLeft(range, target) || this.sensorBottomLeft(range, target));
+            case 6: return (this.sensorBottomRight(range, target) || this.sensorTopRight(range, target));
+            case 8: return (this.sensorTopLeft(range, target) || this.sensorTopRight(range, target));
             default: break;
         }
     }
@@ -405,12 +426,12 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorDiagonalBack = function(range, target) {
+    Game_Character.prototype.sensorDiagonalBack = function (range, target) {
         switch (this.direction()) {
-            case 8: return (this.sensorBottomLeft(range, target)    || this.sensorBottomRight(range, target));
-            case 6: return (this.sensorTopLeft(range, target)       || this.sensorBottomLeft(range, target));
-            case 4: return (this.sensorBottomRight(range, target)   || this.sensorTopRight(range, target));
-            case 2: return (this.sensorTopLeft(range, target)       || this.sensorTopRight(range, target));
+            case 8: return (this.sensorBottomLeft(range, target) || this.sensorBottomRight(range, target));
+            case 6: return (this.sensorTopLeft(range, target) || this.sensorBottomLeft(range, target));
+            case 4: return (this.sensorBottomRight(range, target) || this.sensorTopRight(range, target));
+            case 2: return (this.sensorTopLeft(range, target) || this.sensorTopRight(range, target));
             default: break;
         }
     }
@@ -421,7 +442,7 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorCircle = function(range, target) {
+    Game_Character.prototype.sensorCircle = function (range, target) {
         range = Math.floor(range) < 2 ? 2 : Math.floor(range);
         return (this.sensorDiagonal(range - 1, target) || this.sensorCross(range, target));
     }
@@ -432,10 +453,10 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorFullVision = function(range, target) {
+    Game_Character.prototype.sensorFullVision = function (range, target) {
         range = Math.floor(range) < 2 ? 2 : Math.floor(range);
         return (
-            this.sensorDiagonalVision(range, target)        ||
+            this.sensorDiagonalVision(range, target) ||
             this.sensorVision(range, target)
         );
     }
@@ -446,10 +467,10 @@ var Ulse = Ulse || {};
      * @param {Game_Character} target 
      * @returns {boolean} 
      */
-    Game_Character.prototype.sensorFullBack = function(range, target) {
+    Game_Character.prototype.sensorFullBack = function (range, target) {
         range = Math.floor(range) < 2 ? 2 : Math.floor(range);
         return (
-            this.sensorDiagonalBack(range, target)        ||
+            this.sensorDiagonalBack(range, target) ||
             this.sensorBack(range, target)
         );
     }
@@ -471,6 +492,8 @@ var Ulse = Ulse || {};
         // target
         type = type.trim();
         target = this.character(target);
+        // limit
+        if (!(this.character(0).sensorArea(20, target))) return ($.RangeReturn);
         // return
         if (type.match(/^(area|a)/i)) {
             return (this.character(0).sensorArea(range, target));
@@ -514,5 +537,5 @@ var Ulse = Ulse || {};
             return (this.character(0).sensorFullBack(range, target));
         }
     };
-})(Ulse);
+})(Haya.Ulse);
 Imported["Ulse"] = true;
