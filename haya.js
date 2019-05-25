@@ -2,26 +2,26 @@
 
 /**
  * @file [haya.js -> Haya Core]
- * This plugin contain several tools and useful stuffs to make 
- * somethigns more easy and faster.
+ * This plugin is useful for making some stuffs more easy. 
+ * There are several classes, methods and so on.
  * Special thanks for Fehu (Alisson)
  * =====================================================================
  * @author Dax Soft | Kvothe <www.dax-soft.weebly.com> / <dax-soft@live.com>
- * @version 0.2.7
+ * @version 0.3.5
  * @license MIT <https://dax-soft.weebly.com/legal.html>
+ * @requires 1.6.+ <<RPG Maker MV Version>>
  * =====================================================================
- * @todo [ ] Better Download way
- * @todo [ ] Better Manager for PIXI
- * @todo [ ] Finish Collision methods
+ * 
  */
 
 /*:
  * @author Dax Soft | Kvothe
  * 
- * @plugindesc Essential core for my plugins to MV. [0.2.7]
+ * @plugindesc [0.3.5] Essential core for my plugins to MV. 
  * 
  * @help
  * Important: Insert this plugin before every Haya plugin on the list.
+ * Or, every plugin that need this Core.
  */
 var Imported = Imported || new Object();
 var Haya = new Object();
@@ -31,6 +31,8 @@ Ctrl+F [locate]:
     :fileio [tools and useful stuffs for file manager]
     :utils [general tools for several things]
     :dmath [math function for stuffs]
+        :vector [simple vector class]
+        :position [position calculus for make things easy]
     :touch [TouchInpit]
     :sceneManager [SceneManager]
     :piximanager [manager for PIXI function]
@@ -38,12 +40,52 @@ Ctrl+F [locate]:
         :picture
         :text
         :graphic
+    :plugin | manager of plugins
 ================================================================================ */
+/**
+ * @description more key
+*/
+Input.keyMapper = {
+    9: 'tab',       // tab
+    13: 'ok',       // enter
+    16: 'shift',    // shift
+    17: 'control',  // control
+    18: 'control',  // alt
+    27: 'escape',   // escape
+    32: 'ok',       // space
+    33: 'pageup',   // pageup
+    34: 'pagedown', // pagedown
+    37: 'left',     // left arrow
+    38: 'up',       // up arrow
+    39: 'right',    // right arrow
+    40: 'down',     // down arrow
+    45: 'escape',   // insert
+    81: 'pageup',   // Q
+    87: 'pagedown', // W
+    88: 'escape',   // X
+    90: 'ok',       // Z
+    96: 'escape',   // numpad 0
+    98: 'down',     // numpad 2
+    100: 'left',    // numpad 4
+    102: 'right',   // numpad 6
+    104: 'up',      // numpad 8
+    120: 'debug',    // F9,
+    65: 'a',
+    66: 'b',
+    67: 'c',
+    68: 'd',
+    69: 'e',
+    90: 'z',
+    89: 'x',
+    89: 'y',
+    82: 'r',
+    83: 's',
 
+};
 // =================================================================================
 // [Global function] :global
 // =================================================================================
-function print(value) { console.log(value) };
+function print(...value) { console.log(...value) };
 // =================================================================================
 // [Number: extension] :number
 // =================================================================================
@@ -58,14 +100,14 @@ if (typeof Number.prototype.isBetween === 'undefined') {
      *  [false] will check based on '<=' and '>='
      * @return {boolean}
      */
-    Number.prototype.isBetween = function(min, max, equalNo) {
-        var _isBetween = false; 
+    Number.prototype.isBetween = function (min, max, equalNo) {
+        var _isBetween = false;
         if (equalNo) {
-            if ( (this < max) && (this > min) )
-                _isBetween = true; 
+            if ((this < max) && (this > min))
+                _isBetween = true;
         } else {
-            if ( (this <= max) && (this >= min) )
-                _isBetween = true; 
+            if ((this <= max) && (this >= min))
+                _isBetween = true;
         }
         return _isBetween;
     }
@@ -76,7 +118,7 @@ if (typeof Number.prototype.isOdd === 'undefined') {
      * @desc check out if the current value is odd
      * @return {boolean}
      */
-    Number.prototype.isOdd = function() {
+    Number.prototype.isOdd = function () {
         return (this & 1);
     }
 }
@@ -86,7 +128,7 @@ if (typeof Number.prototype.isEven === 'undefined') {
      * @desc check out if the current value is evan
      * @return {boolean}
      */
-    Number.prototype.isEven = function() {
+    Number.prototype.isEven = function () {
         return !(this & 1);
     }
 }
@@ -99,7 +141,7 @@ if (typeof String.prototype.isEmpty === 'undefined') {
      * @desc check out if an string is empty
      * @return {boolean}
     */
-    String.prototype.isEmpty = function() {
+    String.prototype.isEmpty = function () {
         return (this.length === 0 || !this.trim());
     };
 };
@@ -109,15 +151,15 @@ if (typeof String.prototype.clean === 'undefined') {
      * @desc clean the string of break lines elements and empty spaces
      * @return {string}
     */
-    String.prototype.clean = function() {
+    String.prototype.clean = function () {
         return this.replace(/(\r\n|\n|\r)/gm, "").replace(/^\s+|\s+$/g, "");
     }
 };
 // =================================================================================
 // [Main] :main
 // =================================================================================
-(function($) {
-'use strict';
+(function ($) {
+    'use strict';
     // =============================================================================
     // [Global variable]: $ -> Haya
     // =============================================================================
@@ -131,14 +173,15 @@ if (typeof String.prototype.clean === 'undefined') {
      * @var $.Pixi.TextureCache
      * @type {object}
      * @description take care of loaded textures
-     * @var $.Pixi.Sprite
+     * @function $.Tree
      * @type {function}
-     * @description take care of sprite stuffs
+     * @description Create a tree-list based on JSON file.
      */
     $.alias = new Object();
-    $.Pixi = function() { throw new Error('This is a static class'); };
+    $.Pixi = function () { throw new Error('This is a static class'); };
     $.Pixi.TextureCache = new Object();
-    $.Pixi.Sprite = function() { throw new Error('This is a static class'); };
+    $.Mouse = {};
+    $.GUI = {};
     /**
      * @description some constants from Node
      * @constant fs require('fs')
@@ -147,8 +190,11 @@ if (typeof String.prototype.clean === 'undefined') {
      */
     const fs = require('fs');
     const path = require('path');
-    const http = require('http');
-    const https = require('https');
+    // var befor = process.memoryUsage().heapUsed / 1024 / 1024;
+    //     // your code
+    // var after = process.memoryUsage().heapUsed / 1024 / 1024;
+    // var r = `code consume ~${after-befor} MB in memory`;
+    // console.log(r)
     // =============================================================================
     /**
      * :fileio
@@ -156,20 +202,20 @@ if (typeof String.prototype.clean === 'undefined') {
      * @memberof Haya
      * @description Tools and useful stuffs to manager files
      */
-    $.FileIO = function() { throw new Error('This is a static class'); }
+    $.File = function () { throw new Error('This is a static class'); }
     /**
      * @function Download
      * @memberof FileIO
      * @description Tools and useful stuffs to download things
      */
-    $.FileIO.Download = function() { throw new Error('This is a static class'); }
+    $.File.Download = function () { throw new Error('This is a static class'); }
     /**
      * @param {string} filepath local filepath to file | url;
      * @param {string} type MimeType
      * @type {string}
      * @return {string}
      */
-    $.FileIO.ajax = function(filepath, type) {
+    $.File.ajax = function (filepath, type) {
         type = type || "application/json";
         var xmlHttpRequest = new XMLHttpRequest();
         xmlHttpRequest.open("GET", filepath, false);
@@ -186,80 +232,82 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} filepath local filepath to file | url
      * @return {object} return to HTTLDocument 
      */
-    $.FileIO.xml = function(filepath, mime) {
-        var string = $.FileIO.txt(filepath);
-        return (new DOMParser()).parseFromString(string,  mime || "application/xml");
+    $.File.xml = function (filepath, mime) {
+        var string = $.File.txt(filepath);
+        return (new DOMParser()).parseFromString(string, mime || "application/xml");
     }
     /**
      * @desc read JSON file and return to object
      * @param {string} filepath local filepath to file | url
      * @return {object}
      */
-    $.FileIO.json = function(filepath) { return (JSON.parse($.FileIO.ajax(filepath))); }
+    $.File.json = function (filepath) { return (JSON.parse($.File.ajax(filepath))); }
     /**
      * @description create json file
      * @param {object} [data]
      * @param {string} [filepath]
      * @returns {boolean}
     */
-    $.FileIO.wjson = function(data, filepath) {
+    $.File.wjson = function (data, filepath) {
         if (typeof filepath !== 'string') return false;
         if (!($.Utils.isObject(data))) return false;
         filepath = /.json$/i.test(filepath) ? filepath : filepath + ".json";
-        let local = $.FileIO.local(filepath);
-        fs.writeFile(filepath, JSON.stringify(data, null, "\t"))
+        let local = $.File.local(filepath);
+        fs.writeFile(local, JSON.stringify(data))
         return true;
-    }
-    /**
-     * @desc export object to JSON file
-     * @param {object} object that will be exported
-     * @param {string} filepath local filepath to file | url
-     */
-    $.FileIO.toJson = function(object, filepath) {
-        var data = JSON.stringify(object, "\t");
-        if (!filepath.match(/\.json$/i)) filepath += ".json";
-        fs.writeFile(filepath, data, function (err) {
-            console.log(filepath, "\tcreated");
-        })
     }
     /**
      * @desc read a TXT file
      * @param {string} filepath local filepath to file | url
      * @return {string}
      */
-    $.FileIO.txt = function(filepath) { return ($.FileIO.ajax(filepath, "text/plain")) }
+    $.File.txt = function (filepath) { return ($.File.ajax(filepath, "text/plain")) }
     /**
      * @desc clean the '\' of pathname
      * @param {string} pathname
      * @return {string}
      */
-    $.FileIO.clean = function(pathaname) { return pathaname.replace(/(\/)[(/)]/g, '/') }
+    $.File.clean = function (pathaname) { return pathaname.replace(/(\/)[(/)]/g, '/') }
     /**
      * @desc get the local folder
      * @param {string} pathname to folders inside of 'local folder'
      * @return {string}
      */
-    $.FileIO.local = function(pathname) {
+    $.File.local = function (pathname) {
         var localDirBase = path.dirname(process.mainModule.filename);
         return path.join(localDirBase, pathname);
     }
+    /**
+     * @desc get the local parameters of the plugin
+     */
+    $.File.params = function () { return PluginManager.parameters(decodeURI(/([^\/]+)\.js$/.exec(document.currentScript.src)[1])) }
     /**
      * @desc create a new folder
      * @param {string} pathname
      * @returns {string}
      */
-    $.FileIO.mkdir = function(pathname, localable) {
-        if (localable) pathname = $.FileIO.local(pathname);
+    $.File.mkdir = function (pathname, localable) {
+        if (localable) pathname = $.File.local(pathname);
         if (!fs.existsSync(pathname)) fs.mkdirSync(pathname);
+    }
+    // file exist?
+    $.File.exist = function (path, local = true) {
+        return (fs.existsSync(local ? Haya.File.local(path) : path));
+    }
+    // list of all directory
+    $.File.dirList = function (source) {
+        // is directory
+        const isDirectory = source => fs.lstatSync(source).isDirectory();
+        return fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectory);
     }
     /**
      * @desc get the list of files from folder
      * @param {string} filepath local filepath to file | url
      * @param {function} callback function that has as argument, the filepath
      */
-    $.FileIO.list = function(filepath, callback) {
+    $.File.list = function (filepath, callback) {
         // get local folder
-        filepath = $.FileIO.local(filepath);
+        filepath = $.File.local(filepath);
         // folder exist?
         if (!fs.existsSync(filepath)) { console.warn("folder fon't found", filepath); return []; }
         // get
@@ -271,7 +319,7 @@ if (typeof String.prototype.clean === 'undefined') {
             let status = fs.lstatSync(filename);
             // check out if is not directory
             if (!status.isDirectory()) { callback(filename); }
-        } 
+        }
         return files;
     }
     /**
@@ -281,7 +329,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @example return 
      *  {"x": { "y": [ {obj...} ] } }
      */
-    $.FileIO.objXML = function (xml) {
+    $.File.oxml = function (xml) {
         // return case
         if (Haya.Utils.invalid(xml)) return {};
         // check out children nodes
@@ -311,23 +359,23 @@ if (typeof String.prototype.clean === 'undefined') {
                     // get item
                     var item = xml.children.item(i);
                     data[item.nodeName] = data[item.nodeName] || {}; // recursive
-                    data[item.nodeName] = $.FileIO.objXML(item, data)
+                    data[item.nodeName] = $.File.oxml(item, data)
                 }
             }
         } else if (xml instanceof Element) { // if is Element
             // check out children
             if (xml.children.length > 0) {
                 // data
-                var data = {}; 
+                var data = {};
                 // get each children
                 var i = xml.children.length;
                 while (i--) {
                     // item
                     var item = xml.children.item(i);
                     data[item.nodeName] = data[item.nodeName] || [];
-                    data[item.nodeName].push($.FileIO.objXML(item, data));
+                    data[item.nodeName].push($.File.oxml(item, data));
                 }
-            } 
+            }
         }
         // return
         return data;
@@ -348,18 +396,18 @@ if (typeof String.prototype.clean === 'undefined') {
      *      function () { alert("File downloaded!") }
      *  )
      */
-    $.FileIO.Download.txt = function(url, dest, filename, onLoad) {
+    $.File.Download.txt = function (url, dest, filename, onLoad) {
         // return case
         if ($.Utils.invalid(url)) return false;
         // setup
         var fname = filename || path.basename(url);
-        dest = $.FileIO.local(dest || "");
-        $.FileIO.mkdir(dest);
+        dest = $.File.local(dest || "");
+        $.File.mkdir(dest);
         let destination = dest + "/" + fname;
         // request
         this.xhttp = new XMLHttpRequest();
         // load
-        this.xhttp.onload = function() {
+        this.xhttp.onload = function () {
             fs.writeFile(destination, this.responseText);
             if ($.Utils.isFunction(onLoad)) onLoad.call(this, path.basename(destination), destination);
         }
@@ -378,13 +426,13 @@ if (typeof String.prototype.clean === 'undefined') {
      *                   (basename, dest + filename)
      * @returns {boolean}
      */
-    $.FileIO.Download.img = function(url, dest, filename, type, onLoad) {
+    $.File.Download.img = function (url, dest, filename, type, onLoad) {
         // return case
         if ($.Utils.invalid(url)) return false;
         // setup
         var fname = filename || path.basename(url);
-        dest = $.FileIO.local(dest || "");
-        $.FileIO.mkdir(dest);
+        dest = $.File.local(dest || "");
+        $.File.mkdir(dest);
         let destination = dest + "/" + fname;
         // request
         this.xhttp = new XMLHttpRequest();
@@ -408,8 +456,8 @@ if (typeof String.prototype.clean === 'undefined') {
         // stage
         this.xhttp.onreadystatechange = function () {
             if (this.readyState == this.DONE) {
-                let blob = new Blob([this.response], {type: String("image/" + type)});
-                
+                let blob = new Blob([this.response], { type: String("image/" + type) });
+
                 mreader.onload = function () {
                     fs.writeFile(destination, Buffer(new Uint8Array(this.result)));
                     if ($.Utils.isFunction(onLoad)) onLoad(fname, destination);
@@ -443,29 +491,61 @@ if (typeof String.prototype.clean === 'undefined') {
      * @memberof Utils
      * @description Tools and useful stuffs for Color
      */
-    $.Utils = function() { throw new Error('This is a static class'); };
-    $.Utils.Object = function() { throw new Error('This is a static class'); };
-    $.Utils.String = function() { throw new Error('This is a static class'); };
-    $.Utils.Array = function() { throw new Error('This is a static class'); };
-    $.Utils.Color = function() { throw new Error('This is a static class'); };
+    $.Utils = function () { throw new Error('This is a static class'); };
+    $.Utils.Object = function () { throw new Error('This is a static class'); };
+    $.Utils.String = function () { throw new Error('This is a static class'); };
+    $.Utils.Array = function () { throw new Error('This is a static class'); };
+    $.Utils.Color = function () { throw new Error('This is a static class'); };
+    /**
+     * @description execute cmd commands
+     * @returns {function}
+     * @see https://msdn.microsoft.com/en-us/library/windows/desktop/gg537745(v=vs.85).aspx
+     * @tutorial 
+     * Shell.ShellExecute(sFile, [ vArguments ], [ vDirectory ], [ vOperation ], [ vShow ])
+     * [sFile] : A String that contains the name of the file on which ShellExecute will perform the action specified by vOperation.
+     * [vArguments] : A string that contains parameter values for the operation.
+     * [vDirectory] : The fully qualified path of the directory that contains the file specified by sFile. 
+     * If this parameter is not specified, the current working directory is used.
+     * [vOperation] : The operation to be performed. This value is set to one of the verb strings that is supported by the file. 
+     * For a discussion of verbs, see the Remarks section. If this parameter is not specified, the default operation is performed.
+     * [vShow] : A recommendation as to how the application window should be displayed initially. The application can ignore this recommendation. 
+     * This parameter can be one of the following values. If this parameter is not specified, the application uses its default value.
+     *      0 : Open the application with a hidden window.
+     *      1 : Open the application with a normal window. 
+     * If the window is minimized or maximized, the system restores it to its original size and position.
+     *      2 : Open the application with a minimized window.
+     *      3 : Open the application with a maximized window.
+     *      4 : Open the application with its window at its most recent size and position. The active window remains active.
+     *      5 : Open the application with its window at its current size and position.
+     *      7 : Open the application with a minimized window. The active window remains active.
+     *      10 : Open the application with its window in the default state specified by the application.
+     * @example 
+     * let test = Haya.Utils.shell();
+     * test.ShellExecute("cmd.exe", "cd C: C:\\cd c:\\ext_file main.exe test.txt", "C:\\WINDOWS\\system32", "open", 1);
+     * // or
+     * test.ShellExecute("notepad.exe", "", "", "open", 1);
+     */
+    $.Utils.shell = function () {
+        return (new ActiveXObject("shell.application"));
+    }
     /**
      * @desc check out if is object
      * @param {any}
      * @return {boolean}
      */
-    $.Utils.isObject = function(type) { return (type && Object.prototype.toString.call(type) === '[object Object]'); }
+    $.Utils.isObject = function (type) { return (type && Object.prototype.toString.call(type) === '[object Object]'); }
     /**
-     * @desc check out if is array
+     * @desc check out if is array type. Array.isArray()
      * @param {any}
      * @return {boolean}
      */
-    $.Utils.isArray = function(type) { return (type && Object.prototype.toString.call(type) === '[object Array]'); }
-     /**
-     * @desc check out if is function
-     * @param {any} 
-     * @return {boolean}
-     */
-    $.Utils.isFunction = function(type) { return (type && Object.prototype.toString.call(type) === '[object Function]'); }
+    $.Utils.isArray = function (type) { return (type && Object.prototype.toString.call(type) === '[object Array]'); }
+    /**
+    * @desc check out if is function
+    * @param {any} 
+    * @return {boolean}
+    */
+    $.Utils.isFunction = function (type) { return (type && Object.prototype.toString.call(type) === '[object Function]'); }
     /**
      * @desc check out if is boolean type
      * @param {string} type 
@@ -478,7 +558,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {boolean} booleanDefault | for default, return this param. Default is false
      * @return {boolean}
      */
-    $.Utils.isBoolean = function(type, booleanDefault) {
+    $.Utils.isBoolean = function (type, booleanDefault) {
         // if is boolean
         if (type instanceof Boolean) return type;
         // if is string
@@ -503,10 +583,10 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {any} object
      * @return {boolean}
      */
-    $.Utils.invalid = function(object) { 
+    $.Utils.invalid = function (object) {
         return (
-            typeof object === 'undefined'       ||
-            typeof object === 'null'             
+            typeof object === 'undefined' ||
+            typeof object === 'null'
         );
     }
     /**
@@ -514,7 +594,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {any} [object]
      * @returns {boolean}
     */
-    $.Utils.isFalse = function(object) {
+    $.Utils.isFalse = function (object) {
         if ($.Utils.invalid(object) || object === NaN || object === 0 || object === -1 || object === false) return true;
         return false;
     }
@@ -524,7 +604,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @returns {boolean}
     */
     $.Utils.isTrue = function (object) {
-        return (!($.Utils.isFalse(object))); 
+        return (!($.Utils.isFalse(object)));
     }
     /**
      * @desc get index by propriety of object
@@ -532,20 +612,26 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} propriety that will be checked
      * @param {string} value -> that will be found and return to his index;
      */
-    $.Utils.Object.index = function(object, propriety, value) {
-        object.map(function (element) { 
+    $.Utils.Object.index = function (object, propriety, value) {
+        object.map(function (element) {
             return element[propriety];
         }).indexOf(value);
     };
+    /**
+     * @description check out if there is a property 
+     */
+    $.Utils.Object.hasProperty = function (object, property, value) {
+        if (object.hasOwnProperty(property) === false) object[property] = value;
+        return object[property];
+    }
     /**
      * @desc return the next element from 'object'
      * @param {object} object
      * @param {string} current keyname
      * @return {*} 
      */
-    $.Utils.Object.next = function(object, current) {
-        var next  = (Object.keys(object).indexOf(current) + 1) % Object.keys(object).length;
-        console.log(object[Object.keys(object)[next]], next)
+    $.Utils.Object.next = function (object, current) {
+        var next = (Object.keys(object).indexOf(current) + 1) % Object.keys(object).length;
         return object[Object.keys(object)[next]];
     }
     /**
@@ -554,8 +640,8 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} current keyname
      * @return {*}
      */
-    $.Utils.Object.pred = function(object, current) {
-        var pred  = (Object.keys(object).indexOf(current) - 1) % Object.keys(object).length;
+    $.Utils.Object.pred = function (object, current) {
+        var pred = (Object.keys(object).indexOf(current) - 1) % Object.keys(object).length;
         return object[Object.keys(object)[pred]];
     }
     /**
@@ -565,11 +651,11 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {boolean} replace replace elements that 'object' have. Default is [true]
      * @return {obejct}
      */
-    $.Utils.Object.merge = function(object, mobject, replace) {
+    $.Utils.Object.merge = function (object, mobject, replace) {
         // replace 
         replace = replace || true;
         // new object
-        var nobject = new Object(); 
+        var nobject = new Object();
         // check out if object and mobject is Object
         if (!$.Utils.isObject(object) || !$.Utils.isObject(mobject)) return nobject;
         // merge function
@@ -581,7 +667,7 @@ if (typeof String.prototype.clean === 'undefined') {
                     nobject[keyname] = $.Utils.merge(
                         object[keyname],
                         $.Utils.merge(object[keyname], mobject[keyname], replace),
-                        replace	
+                        replace
                     );
                 } else {
                     nobject[keyname] = replace ? mobject[keyname] : object[keyname];
@@ -600,7 +686,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {any} [scope] use as scope for 'callback'. If don't set up is by default, the object.
      * @returns {Object}
      */
-    $.Utils.Object.each = function(object, callback, scope) {
+    $.Utils.Object.each = function (object, callback, scope) {
         // check out if object is Object
         if (!($.Utils.isObject(object))) return {};
         // get each keys
@@ -616,7 +702,7 @@ if (typeof String.prototype.clean === 'undefined') {
                         scope || object,
                         this.keys[i],
                         object[this.keys[i]],
-                        i, 
+                        i,
                         object
                     );
                 }
@@ -630,19 +716,10 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} [string]
      * @returns {string}
      */
-    $.Utils.String.capitalize = function(string) {
+    $.Utils.String.capitalize = function (string) {
         return string.replace(/(^|\. *)([a-z])/g, function (result, separator, char) {
             return (separator + char.toUpperCase());
         });
-    }
-    /**
-     * @description check out if array contain X element
-     * @param {array} [array] 
-     * @param {element} [element]
-     * @returns {boolean}
-     */
-    $.Utils.Array.contain = function(array, element) {
-        return (array.indexOf(element) === -1 ? false : true);
     }
     /**
      * @description get a random element from array
@@ -651,13 +728,9 @@ if (typeof String.prototype.clean === 'undefined') {
      * at the element index until 'end'
      * @param {number} [end] (optional, default is length) 
      * until 'end' element index.
-     * @returns {boolean}
+     * @returns {Array}
      */
-    $.Utils.Array.random = function(array, at, end) {
-        at = at || 0;
-        end = end || array.length;
-        return array[$.DMath.randInt(at, end - 1)];
-    }
+    $.Utils.Array.random = function (array, at, end) { return array[$.DMath.randInt((at || 0), (end || array.length) - 1)]; }
     /**
      * @description check up if all element on Array is false. Will only
      * check out elements that is Boolean type.
@@ -671,7 +744,7 @@ if (typeof String.prototype.clean === 'undefined') {
      *  [true] if every value is false
      *  [false] if isn't
      */
-    $.Utils.Array.isFalse = function(array, callback, scope) {
+    $.Utils.Array.isFalse = function (array, callback, scope) {
         // get each 'boolean' element
         this.boolean = [];
         let i = array.length;
@@ -679,7 +752,7 @@ if (typeof String.prototype.clean === 'undefined') {
             if ($.Utils.isBoolean(array[i], -1) !== -1) {
                 this.boolean.push($.Utils.isBoolean(array[i]));
                 callback.call(scope || array, array[i]);
-            } 
+            }
         }
         // return
         return this.boolean.every(function (el) { return el === false; })
@@ -697,8 +770,32 @@ if (typeof String.prototype.clean === 'undefined') {
      *  [true] if every value is true
      *  [false] if isn't
      */
-    $.Utils.Array.isTrue = function(array, callback, scope) {
-        return (!($.Utils.Array.isFalse(array, callback, scope)));
+    $.Utils.Array.isTrue = function (array, callback, scope) {
+        // get each 'boolean' element
+        this.boolean = [];
+        let i = array.length;
+        while (i--) {
+            if ($.Utils.isBoolean(array[i], -1) !== -1) {
+                this.boolean.push($.Utils.isBoolean(array[i]));
+                callback.call(scope || array, array[i]);
+            }
+        }
+        // return
+        return this.boolean.every(function (el) { return el === true; })
+    }
+    /**
+     * @description remove a element if it exists
+     * @param {Array} [array]
+     * @param {element} [element]
+     * @returns {Boolean}
+     */
+    $.Utils.Array.remove = (array, element) => {
+        if ($.Utils.Array.contain(array, element)) {
+            array.splice(array.indexOf(element), 1);
+            return true;
+        } else {
+            return false;
+        }
     }
     /**
      * @description expand a array until 'limit' by following the 
@@ -712,25 +809,65 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {*} [scope] by default is [array]
      * @returns {array}
      */
-    $.Utils.Array.step = function(start, end, step, callback, scope) {
+    $.Utils.Array.step = function (start, end, step, callback, scope) {
         // checkup
         start = start || 0;
         step = step || 1;
         // into
         for (let array = []; (end - start) * step > 0; start += step) {
             array.push(start);
-            callback.call(scope || array, array.pop(), start, end, step, array);
+            if ($.Utils.isFunction(callback)) callback.call(scope || array, array.pop(), start, end, step, array);
         }
         return array;
+    }
+    /**
+     * @description chunk a array into smaller arrays
+     * @example
+     * Haya.Utils.Array.chunk([1,2,3,4], 2) // [[1, 2], [3, 4]]
+     * @param {array} [array=[]] to chunk up
+     * @param {number} [size=2] the amount of element into each smaller array
+     * @returns {array}
+     */
+    $.Utils.Array.chunk = function (array, size = 2) {
+        Array.from({ length: Math.ceil(array.length / size) }, (v, i) =>
+            array.slice(i * size, i * size + size)
+        );
     }
     /**
      * @description get a random color
      * @return {string} <hex>
     */
-    $.Utils.Color.random = function() {
+    $.Utils.Color.random = function () {
         let random = (Math.random() * 0x1000000 << 0).toString(16);
         let array = new Array(7 - random.length).join("0") + random;
         return String("#" + array);
+    }
+    /**
+     * @description get hex into rgb
+     * @param {String} [hex="#..."|"0x..."]
+     * @returns Object {red, green, blue};
+     */
+    $.Utils.Color.hexRgb = function (hex) {
+        // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+        var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            red: parseInt(result[1], 16),
+            green: parseInt(result[2], 16),
+            blue: parseInt(result[3], 16)
+        } : null;
+    }
+    /**
+     * @description get rgb into hex
+     * @param {Number} [...color(red, green, blue)]
+     * @returns String
+     */
+    $.Utils.Color.rgbHex = function (r, g, b, type = "#") {
+        return type + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
     // =============================================================================
     /**
@@ -747,33 +884,58 @@ if (typeof String.prototype.clean === 'undefined') {
      * @memberof DMath
      * @description Tool for Vector classes
      */
-    $.DMath = function() { throw new Error('This is a static class'); };
-    $.DMath.Position = function() { throw new Error('This is a static class'); };
-    $.DMath.Vector = function() { throw new Error('This is a static class'); };
+    $.DMath = function () { throw new Error('This is a static class'); };
+    $.DMath.Position = function () { throw new Error('This is a static class'); };
+    $.DMath.Vector = function () { throw new Error('This is a static class'); };
+    /**
+     * @from https://30secondsofcode.org/math
+     * @description Initializes an array containing the numbers in the specified range where start and 
+     * end are inclusive and the ratio between two terms is step. Returns an error if step equals 1.
+     * @example
+     * Haya.DMath.geometricProgression(256) // [1, 2, 4, 8, 16, 32, 64, 128, 256]
+     *           .geometricProgression(256, 3); // [3, 6, 12, 24, 48, 96, 192]
+     *           .geometricProgression(256, 1, 4); // [1, 4, 16, 64, 256]
+     */
+    $.DMath.geometricProgression = function (end, start = 1, step = 2) {
+        return Array.from({ length: Math.floor(Math.log(end / start) / Math.log(step)) + 1 }).map(
+            (v, i) => start * step ** i
+        );
+    }
+    /**
+     * @from https://30secondsofcode.org/math
+     * @description Calculates the midpoint between two pairs of (x,y) points.
+     * @example 
+     * midpoint([2, 2], [4, 4]); // [3, 3]
+     * midpoint([4, 4], [6, 6]); // [5, 5]
+     * midpoint([1, 3], [2, 4]); // [1.5, 3.5]
+     */
+    $.DMath.midpoint = ([x1, y1], [x2, y2]) => {
+        return [(x1 + x2) / 2, (y1 + y2) / 2]
+    }
     /**
      * @desc turn value to percent by max
      * @param {number, number, number}
      * @return {number}
      */
-    $.DMath.percentTo = function(current, min, max) { return ((current * min) / max); }
+    $.DMath.percentTo = function (current, min, max) { return ((current * min) / max); }
     /**
      * @desc turn value to percent
      * @param {number, number}
      * @return {number}
      */
-    $.DMath.toPercent = function(current, min) { return ((current * min) / 100); }
+    $.DMath.toPercent = function (current, min) { return ((current * min) / 100); }
     /**
      * @desc get a random numeric between a min and max value.
      * @param {number, number}
      * @return {number}
      */
-    $.DMath.rand = function(min, max) { return Math.random() * (max - min) + min; }
+    $.DMath.rand = function (min, max) { return Math.random() * (max - min) + min; }
     /**
      * @desc get a random numeric between a min and max value with integer value.
      * @param {number, number}
      * @return {number}
      */
-    $.DMath.randInt = function(min, max) {
+    $.DMath.randInt = function (min, max) {
         min = Math.ceil(min); max = Math.floor(max);
         return ~~(Math.random() * (max - min + 1)) + min;
     }
@@ -782,11 +944,11 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {number, number}
      * @return {number}
      */
-    $.DMath.randomic = function(current, variation) {
+    $.DMath.randomic = function (current, variation) {
         let random = $.DMath.randInt(0, 1) === 0 ? $.DMath.rand(0, variation) : -$.DMath.rand(0, variation);
         current = (current + $.DMath.rand(0, 2)) + (current + random);
-        return (Math.round(current) / 2);
-    } 
+        return (current / 2);
+    }
     /**
      * @description catch up the distance between 2 number and return
      * the absolute value
@@ -798,13 +960,26 @@ if (typeof String.prototype.clean === 'undefined') {
         return Math.abs(x - y);
     }
     /**
+     * @description get the (Euclidean Distance) between two
+     * point position.
+     * @param {Vector|Point} [a]
+     * @param {Vector|Point} [b]
+     * @returns {Number}
+     */
+    $.DMath.euclidean2d = (a, b) => {
+        return Math.sqrt(
+            Math.pow((b.x - a.x), 2) +
+            Math.pow((b.y - a.y), 2)
+        );
+    }
+    /**
      * @description Converts from radians to degrees.
      * @param {number} [radians]
      * @example 
      * Haya.DMath.degrees(~1.570) // 90
      * @returns {number}
      */
-    $.DMath.degrees = function(radians) { return (radians * 180 / Math.PI); };
+    $.DMath.degrees = function (radians) { return (radians * 180 / Math.PI); };
     /**
      * @description Converts from degrees to radians.
      * @param {number} [degrees]
@@ -812,7 +987,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * Haya.DMath.radians(90) // ~1.570
      * @returns {number}
      */
-    $.DMath.radians = function(degrees) { return (degrees * Math.PI / 180); };
+    $.DMath.radians = function (degrees) { return (degrees * Math.PI / 180); };
     /**
      * @description Iterates over 'start' numeric value until 'end' 
      * numeric value.
@@ -822,7 +997,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {!function(this:scope, current, start, end, array)} [callback]
      * @returns {array}
      */
-    $.DMath.upto = function(start, end, callback, scope) {
+    $.DMath.upto = function (start, end, callback, scope) {
         this.array = [];
         let i = Math.trunc(start);
         while (i <= Math.trunc(end)) {
@@ -840,7 +1015,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {!function(this:scope, current, limit, end, array)} [callback]
      * @returns {array}
      */
-    $.DMath.downto = function(end, limit, callback, scope) {
+    $.DMath.downto = function (end, limit, callback, scope) {
         this.array = [];
         let i = Math.trunc(end);
         while (i--) {
@@ -851,6 +1026,168 @@ if (typeof String.prototype.clean === 'undefined') {
         return this.array;
     }
     /**
+     * @description Sigmoid functions have domain of all real numbers,
+     * with return value monotonically increasing most often from 0 to 1 or 
+     * alternatively from −1 to 1, depending on convention. The standard logistic 
+     * function is the logistic function with parameters 
+     * (k = 1, x0 = 0, l = 1) which yields
+     * @see https://en.wikipedia.org/wiki/Logistic_function
+     * @param {Number} [x] the value. Recommended small real numbers. 
+     * Due to nature of 'Math.E'
+     * @param {Number} [x0=0] the x-value of the sigmoid's midpoint
+     * @param {Number} [l=1] the curve's maximum value
+     * @param {Number} [k=1] the steepness of the curve
+     * @returns {Number}
+     */
+    $.DMath.sigmoid = (x, x0 = 0, l = 1, k = 1) => {
+        return (
+            (l) /
+            (1 + (Math.pow(Math.E, -k * (x - x0))))
+        );
+    }
+    /**
+     * @description fix the float
+     */
+    $.DMath.float = (value, n = 2) => {
+        return parseFloat(value.toFixed(n || 2));
+    }
+    /**
+     * @description clamping a float number
+     * @param {Number} [current]
+     * @param {Number} [min]
+     * @param {Number} [max]
+     * @returns {Number}
+     */
+    $.DMath.fclamp = (current, min, max) => {
+        //min: (current > min ? min : current)
+        //Math.min(Math.max(min, val), max)
+        return (
+            (current > min ? (current < max ? current : max) : min)
+        );
+    }
+    /**
+     * @description increase a float value for a variable
+     * while clamping the value
+     * @param {Number} [current] // value to increase
+     * @param {Number} [min]
+     * @param {Number} [max]
+     * @param {Number} [amount] // how many will increase
+     * @param {String} [key] // while pressing the key will change the
+     * amount to the next 'amount' | Put null to not use
+     * @param {Number} [keyAmount]
+     */
+    $.DMath.fincrease = (current, min, max, amount, key="alt", keyAmount=1) => {
+        current += (Input.isLongPressed(key)) ? keyAmount : amount;
+        return $.DMath.fclamp(current, min, max);
+    }
+    /**
+     * @description decrease a float value for a variable
+     * while clamping the value
+     * @param {Number} [current] // value to decrease
+     * @param {Number} [min]
+     * @param {Number} [max]
+     * @param {Number} [amount] // how many will decrease
+     * @param {String} [key] // while pressing the key will change the
+     * amount to the next 'amount' | Put null to not use
+     * @param {Number} [keyAmount]
+     */
+    $.DMath.fdecrease = (current, min, max, amount, key="alt", keyAmount=1) => {
+        current -= (typeof key === 'string' && Input.isLongPressed(key)) ? keyAmount : amount;
+        return $.DMath.fclamp(current, min, max);
+    }
+    /**
+     * @description use the wheel of the mouse to change the value
+     * @param {Number} [current] // value to decrease
+     * @param {Number} [min]
+     * @param {Number} [max]
+     * @param {Number} [amount] // how many will decrease
+     * @param {Function} [onchange] // when change the value
+     * @param {String} [key] // while pressing the key will change the
+     * amount to the next 'amount' | Put null to not use
+     * @param {Number} [keyAmount]
+     * @param {Number} [wheelV]
+     */
+    $.DMath.wheelID = function (current, min, max, amount, onchange=null, key="alt", keyAmount=1, wheelV=20) {
+        if (TouchInput.wheelY >= wheelV) {
+            current = $.DMath.fincrease(current, min, max, amount, key, keyAmount);
+            if ($.Utils.isFunction(onchange)) onchange.call(this, current);
+        } else if (TouchInput.wheelY <= -wheelV) {
+            current = $.DMath.fdecrease(current, min, max, amount, key, keyAmount);
+            if ($.Utils.isFunction(onchange)) onchange.call(this, current);
+        }
+        return current;
+    }
+    /**
+     * @function rotate 
+     * @description rotates a object based in his angle
+     * @param {Body.?(Vector|Point)} [body=body.vel]
+     * @param {Float} [angle]
+     * @returns {Vector};
+     */
+    $.DMath.rotate = function (body, angle) {
+        return (new $.DMath.Vector2D(
+            (body.x * Math.cos(angle)) - (body.y * Math.sin(angle)),
+            (body.x * Math.sin(angle)) + (body.y * Math.cos(angle))
+        ));
+    }
+    /**
+     * @function collision_AVM
+     * @description free resolve the collision between two bodies. In this case,
+     * just change the velocity based on mass, angle and position of two bodies.
+     */
+    $.DMath.collision_AVM = function (a, b, as, bs, callback) {
+        // difference between axis based on velocity
+        var diffVX = av.x - bv.y;
+        var diffVY = av.x - bv.y;
+        // get the distance based on 'b'
+        var distX = bs.x - as.x;
+        var distY = bs.y - as.y;
+        // Prevent accidental overlap of particles
+        if (~~((diffVX * distX) + (diffVY * distY)) >= 0) {
+            // math of the angle between this two bodies
+            var angle = -Math.atan2(bs.y - as.y, bs.x - as.y);
+            // get the mass
+            var massA = a.mass;
+            var massB = b.mass;
+            // get the rotate velocity before the collision equation
+            var u1 = $.DMath.rotate(av, angle);
+            var u2 = $.DMath.rotate(bv, angle);
+            // velocity after collision
+            var v1 = new Haya.DMath.Vector2D(
+                (u1.x * (massA - massB)) / (massA + massB) + u2.x * 2 * massB / (massA + massB),
+                u1.y
+            )
+
+            var v2 = new Haya.DMath.Vector2D(
+                (u2.x * (massA - massB)) / (massA + massB) + u1.x * 2 * massB / (massA + massB),
+                u2.y
+            )
+
+            // final velocity after rotating axis back
+            var vfA = $.DMath.rotate(v1, -angle);
+            var vfB = $.DMath.rotate(v2, -angle);
+            // Swap particle velocities for realistic bounce effect
+            // a.velocity.x = vfA.x;
+            // a.velocity.y = vfA.y;
+            // b.velocity.x = vfB.x;
+            // b.velocity.y = vfB.y;
+            let c = {
+                a: a,
+                b: b,
+                diffVX: diffVX,
+                diffVY: diffVY,
+                distX: distX,
+                distY: distY,
+                angle: angle,
+                massA: massA,
+                massB: massB,
+                u1: u1,
+                u2: u2
+            }
+            if ($.Utils.isFunction(callback)) callback.call(this, vfA, vfB, c);
+        }
+    }
+    /**
      * @desc display object based on screen
      * @param {object} hash that contains:
      *      type: [type of position],
@@ -859,13 +1196,13 @@ if (typeof String.prototype.clean === 'undefined') {
      *      [optional] height [height of object, case don't have]
      * @return {Point}
      */
-    $.DMath.Position.screen = function(hash) {
+    $.DMath.Position.screen = function (hash) {
         // default position 
         let point = new Point(0, 0);
         let width = hash.object === undefined ? hash.width : hash.object.width;
         let height = hash.object === undefined ? hash.height : hash.object.height;
         // condition
-        if (hash.type === "center" || hash.type === "c" || hash.type === 0 ) {
+        if (hash.type === "center" || hash.type === "c" || hash.type === 0) {
             point.x = (Graphics.boxWidth - width) / 2;
             point.y = (Graphics.boxHeight - height) / 2;
         } else if (hash.type === "centerLeft" || hash.type === "cl" || hash.type === 1) {
@@ -876,17 +1213,17 @@ if (typeof String.prototype.clean === 'undefined') {
             point.y = (Graphics.boxHeight - height) / 2;
         } else if (hash.type === "centerTop" || hash.type === "ct" || hash.type === 3) {
             point.x = (Graphics.boxWidth - width) / 2;
-        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) { 
+        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) {
             point.x = (Graphics.boxWidth - width) / 2;
             point.y = Graphics.boxHeight - height;
-        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) { 
+        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) {
             point.x = Graphics.boxWidth - width;
         } else if (hash.type === "bottomRight" || hash.type === "br" || hash.type === 6) {
             point.x = Graphics.boxWidth - width;
-            point.y =  Graphics.boxHeight - height;
+            point.y = Graphics.boxHeight - height;
         } else if (hash.type === "bottomLeft" || hash.type === "bf" || hash.type === 7) {
-            point.y =  Graphics.boxHeight - height;
-        } 
+            point.y = Graphics.boxHeight - height;
+        }
         // return default if nothing is setup
         return point;
     }
@@ -898,11 +1235,11 @@ if (typeof String.prototype.clean === 'undefined') {
      *      b: [second object, that will be the reference point |need to have x, y, width, height|]
      * @return {Point}
      */
-    $.DMath.Position.sprite = function(hash) {
+    $.DMath.Position.sprite = function (hash) {
         // default position 
         let point = new Point(hash.a.x, hash.a.y);
         // type
-        if (hash.type === "center" || hash.type === "c" || hash.type === 0 ) {
+        if (hash.type === "center" || hash.type === "c" || hash.type === 0) {
             point.x = hash.b.x + ((hash.b.width - hash.a.width) / 2);
             point.y = hash.b.y + ((hash.b.height - hash.a.height) / 2);
         } else if (hash.type === "centerLeft" || hash.type === "cl" || hash.type === 1) {
@@ -914,13 +1251,13 @@ if (typeof String.prototype.clean === 'undefined') {
         } else if (hash.type === "centerTop" || hash.type === "ct" || hash.type === 3) {
             point.x = hash.b.x + (hash.b.width - hash.a.width) / 2;
             point.y = hash.b.y;
-        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) { 
+        } else if (hash.type === "centerBottom" || hash.type === "cb" || hash.type === 4) {
             point.x = hash.b.x + (hash.b.width - hash.a.width) / 2;
             point.y = hash.b.y + hash.b.height;
-        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) { 
+        } else if (hash.type === "upperRight" || hash.type === "ur" || hash.type === 5) {
             point.x = hash.b.x + hash.b.width;
             point.y = hash.b.y - hash.b.height;
-        } else if (hash.type === "upperLeft" || hash.type === "ul" || hash.type === 6) { 
+        } else if (hash.type === "upperLeft" || hash.type === "ul" || hash.type === 6) {
             point.x = hash.b.x;
             point.y = hash.b.y - hash.b.height;
         } else if (hash.type === "bottomRight" || hash.type === "br" || hash.type === 7) {
@@ -929,74 +1266,77 @@ if (typeof String.prototype.clean === 'undefined') {
         } else if (hash.type === "bottomLeft" || hash.type === "bf" || hash.type === 8) {
             point.x = hash.b.x;
             point.y = hash.b.y + hash.b.height;
-        } 
+        }
         // return
         return point;
     }
     /**
-     * @class D2
+     * @class Vector :vector
      * @classdesc A simple and useful Vector 2D class
      * @memberof Vector
+     * @constructor
+     * @param {number} [x] axis
+     * @param {number} [y] axis
      */
-    $.DMath.Vector.D2 = class {
+    class Vector2D {
         /**
          * @constructor
          * @param {number} [x] axis
          * @param {number} [y] axis
          */
-        constructor (x, y) {
+        constructor(x, y) {
             this.x = x;
             this.y = y;
         }
         /**
          * @description sum to another vector class
-         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * @param {Vector2D|Point|Array} [vector] If is number then will
          * add the number toward the x and y axis.
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         add(vector) {
             if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
             if (typeof vector === 'number') { vector = new Point(vector, vector) };
-            return new $.DMath.Vector.D2(this.x + vector.x, this.y + vector.y);
+            return new $.DMath.Vector2D(this.x + vector.x, this.y + vector.y);
         }
         /**
          * @description substract to another vector class
-         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * @param {Vector2D|Point|Array} [vector] If is number then will
          * add the number toward the x and y axis.
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         sub(vector) {
             if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
             if (typeof vector === 'number') { vector = new Point(vector, vector) };
-            return new $.DMath.Vector.D2(this.x - vector.x, this.y - vector.y);
+            return new $.DMath.Vector2D(this.x - vector.x, this.y - vector.y);
         }
         /**
          * @description multiply to another vector class
-         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * @param {Vector2D|Point|Array} [vector] If is number then will
          * add the number toward the x and y axis.
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         mult(vector) {
             if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
             if (typeof vector === 'number') { vector = new Point(vector, vector) };
-            return new $.DMath.Vector.D2(this.x * vector.x, this.y * vector.y);
+            return new $.DMath.Vector2D(this.x * vector.x, this.y * vector.y);
         }
         /**
          * @description divide to another vector class
-         * @param {Vector.D2|Point|Array} [vector] If is number then will
+         * @param {Vector2D|Point|Array} [vector] If is number then will
          * add the number toward the x and y axis.
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         div(vector) {
             if ($.Utils.isArray(vector)) { vector = new Point(vector.shift(), vector.pop()); }
             if (typeof vector === 'number') { vector = new Point(vector, vector) };
             vector.x = vector.x === 0 ? 1 : vector.x;
             vector.y = vector.y === 0 ? 1 : vector.y;
-            return new $.DMath.Vector.D2(this.x / vector.x, this.y / vector.y);
+            return new $.DMath.Vector2D(this.x / vector.x, this.y / vector.y);
         }
         /**
          * @description get a dot point based on vector
-         * @param {Vector.D2|Point|Array} [vector]
+         * @param {Vector2D|Point|Array} [vector]
          * @returns {numeric}
          */
         dot(vector) {
@@ -1013,11 +1353,11 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description check up if is equals toward another
          * vector
-         * @param {Vector.D2} [vector] 
+         * @param {Vector2D} [vector] 
          * @returns {Boolean}
          */
         equals(vector) {
-            if (vector instanceof $.DMath.Vector.D2) {
+            if (vector instanceof $.DMath.Vector2D) {
                 return (this.x === vector.x && this.y === vector.y);
             }
             return false;
@@ -1041,16 +1381,16 @@ if (typeof String.prototype.clean === 'undefined') {
             return true;
         }
         /**
-         * @description get a new Vector.D2 based on
+         * @description get a new Vector2D based on
          * normalize value
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         normalized() {
-            return (new $.DMath.Vector.D2(this.x, this.y).normalize());
+            return (new $.DMath.Vector2D(this.x, this.y).normalize());
         }
         /**
          * @description scale the value
-         * @param {Point|Vector.D2|Array} [sc] anything that has '.x' and '.y'
+         * @param {Point|Vector2D|Array} [sc] anything that has '.x' and '.y'
          * or a array with two elements.
          */
         scale(sc) {
@@ -1062,7 +1402,7 @@ if (typeof String.prototype.clean === 'undefined') {
         }
         /**
          * @description set a new axis value
-         * @param {Point|Vector.D2|Array} [sc] anything that has '.x' and '.y'
+         * @param {Point|Vector2D|Array} [sc] anything that has '.x' and '.y'
          * or a array with two elements.
          */
         set(sc) {
@@ -1074,24 +1414,24 @@ if (typeof String.prototype.clean === 'undefined') {
         }
         /**
          * @description clone the class
-         * @returns {Vector.D2}
+         * @returns {Vector2D}
          */
         clone() {
-            return (new $.DMath.Vector.D2(this.x, this.y));
+            return (new $.DMath.Vector2D(this.x, this.y));
         }
         /**
          * @description return a perpendicular vector class
-         * @returns {Vector.D2} 
+         * @returns {Vector2D} 
          */
         perpendicular() {
-            return (new $.DMath.Vector.D2(this.y, -(this.x)));
+            return (new $.DMath.Vector2D(this.y, -(this.x)));
         }
         /**
          * @description get the negative version of this vector class
-         * @returns {Vector.D2} 
+         * @returns {Vector2D} 
          */
         negative() {
-            return new $.DMath.Vector.D2(-this.x, -this.y);
+            return new $.DMath.Vector2D(-this.x, -this.y);
         }
         /**
          * @description to angles
@@ -1102,17 +1442,17 @@ if (typeof String.prototype.clean === 'undefined') {
         }
         /**
          * @description get angles into
-         * @param {Vector.D2} [vector]
+         * @param {Vector2D} [vector]
          * @returns {numeric}
          */
         ato(vector) {
             return Math.acos(this.dot(vector) / (this.length() * vector.length()));
         }
-    }
+    }; $.DMath.Vector2D = Vector2D;
     /**
      * @description return the angle between 2 vector 2d.
-     * @param {Vector.D2} [to]
-     * @param {Vector.D2} [from]
+     * @param {Vector2D} [to]
+     * @param {Vector2D} [from]
      * @returns {Numeric}
      */
     $.DMath.Vector.angle2d = function (to, from) {
@@ -1121,12 +1461,12 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description compare to vector 2d class and return with
      * the minimum value
-     * @param {Vector.D2} [from]
-     * @param {Vector.D2} [to]
-     * @returns {Vector.D2}
+     * @param {Vector2D} [from]
+     * @param {VecVector2Dtor} [to]
+     * @returns {Vector2D}
      */
     $.DMath.Vector.min2d = function (from, to) {
-        return (new $.DMath.Vector.D2(
+        return (new $.DMath.Vector2D(
             Math.min(from.x, to.x),
             Math.min(from.y, to.y)
         ));
@@ -1134,12 +1474,12 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description compare to vector 2d class and return with
      * the maximum value
-     * @param {Vector.D2} [from]
-     * @param {Vector.D2} [to]
-     * @returns {Vector.D2}
+     * @param {Vector2D} [from]
+     * @param {Vector2D} [to]
+     * @returns {Vector2D}
      */
     $.DMath.Vector.max2d = function (from, to) {
-        return (new $.DMath.Vector.D2(
+        return (new $.DMath.Vector2D(
             Math.max(from.x, to.x),
             Math.max(from.y, to.y)
         ));
@@ -1147,8 +1487,8 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description get the cross product between two vector 2d class
      * @see https://en.wikipedia.org/wiki/Cross_product
-     * @param {Vector.D2} [from]
-     * @param {Vector.D2} [to]
+     * @param {Vector2D} [from]
+     * @param {Vector2D} [to]
      * @returns {Numeric}
      */
     $.DMath.Vector.cross2d = function (from, to) {
@@ -1157,8 +1497,8 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description get the dot product between two vector 2d class
      * @see https://en.wikipedia.org/wiki/Dot_product
-     * @param {Vector.D2} [from]
-     * @param {Vector.D2} [to]
+     * @param {Vector2D} [from]
+     * @param {Vector2D} [to]
      * @returns {Numeric}
      */
     $.DMath.Vector.dot2d = function (from, to) {
@@ -1170,14 +1510,14 @@ if (typeof String.prototype.clean === 'undefined') {
      * @classdesc A simple and useful vector 3d class
      * @memberof Vector
      */
-    $.DMath.Vector.D3 = class {
+    class Vector3D {
         /**
          * @constructor 
          * @param {number} [x] axis
          * @param {number} [y] axis
          * @param {number} [z] depth
          */
-        constructor (x, y, z) {
+        constructor(x, y, z) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -1185,22 +1525,22 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description return a new vector 3d class based
          * on negative values
-         * @returns {Vector.D3} 
+         * @returns {Vector3D} 
          */
         negative() {
-            return new $.DMath.Vector.D3(-this.x, -this.y, -this.z);
+            return new $.DMath.Vector3D(-this.x, -this.y, -this.z);
         }
         /**
          * @description add values (sum) into this class
          * based on another vector class
-         * @param {Vector.D3|Number} [vector]
-         * @returns {Vector.D3}
+         * @param {Vector3D|Number} [vector]
+         * @returns {Vector3D}
          */
         add(vector) {
-            if (vector instanceof $.DMath.Vector.D3) {
-                return new $.DMath.Vector.D3(this.x + vector.x, this.y + vector.y, this.z + vector.z);
+            if (vector instanceof $.DMath.Vector3D) {
+                return new $.DMath.Vector3D(this.x + vector.x, this.y + vector.y, this.z + vector.z);
             } else if (typeof vector === 'number') {
-                return new $.DMath.Vector.D3(this.x + vector, this.y + vector, this.z + vector);
+                return new $.DMath.Vector3D(this.x + vector, this.y + vector, this.z + vector);
             } else {
                 this;
             }
@@ -1208,14 +1548,14 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description subtract values (sum) into this class
          * based on another vector class
-         * @param {Vector.D3|Number} [vector]
-         * @returns {Vector.D3}
+         * @param {Vector3D|Number} [vector]
+         * @returns {Vector3D}
          */
         sub(vector) {
-            if (vector instanceof $.DMath.Vector.D3) {
-                return new $.DMath.Vector.D3(this.x - vector.x, this.y - vector.y, this.z - vector.z);
+            if (vector instanceof $.DMath.Vector3D) {
+                return new $.DMath.Vector3D(this.x - vector.x, this.y - vector.y, this.z - vector.z);
             } else if (typeof vector === 'number') {
-                return new $.DMath.Vector.D3(this.x - vector, this.y - vector, this.z - vector);
+                return new $.DMath.Vector3D(this.x - vector, this.y - vector, this.z - vector);
             } else {
                 this;
             }
@@ -1223,14 +1563,14 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description multiply values (sum) into this class
          * based on another vector class
-         * @param {Vector.D3|Number} [vector]
-         * @returns {Vector.D3}
+         * @param {Vector3D|Number} [vector]
+         * @returns {Vector3D}
          */
         mult(vector) {
-            if (vector instanceof $.DMath.Vector.D3) {
-                return new $.DMath.Vector.D3(this.x * vector.x, this.y * vector.y, this.z * vector.z);
+            if (vector instanceof $.DMath.Vector3D) {
+                return new $.DMath.Vector3D(this.x * vector.x, this.y * vector.y, this.z * vector.z);
             } else if (typeof vector === 'number') {
-                return new $.DMath.Vector.D3(this.x * vector, this.y * vector, this.z * vector);
+                return new $.DMath.Vector3D(this.x * vector, this.y * vector, this.z * vector);
             } else {
                 this;
             }
@@ -1238,18 +1578,18 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description divide values (sum) into this class
          * based on another vector class
-         * @param {Vector.D3|Number} [vector]
-         * @returns {Vector.D3}
+         * @param {Vector3D|Number} [vector]
+         * @returns {Vector3D}
          */
         div(vector) {
-            if (vector instanceof $.DMath.Vector.D3) {
+            if (vector instanceof $.DMath.Vector3D) {
                 vector.x = vector.x === 0 ? 1 : vector.x;
                 vector.y = vector.y === 0 ? 1 : vector.y;
                 vector.z = vector.x === 0 ? 1 : vector.z;
-                return new $.DMath.Vector.D3(this.x / vector.x, this.y / vector.y, this.z / vector.z);
+                return new $.DMath.Vector3D(this.x / vector.x, this.y / vector.y, this.z / vector.z);
             } else if (typeof vector === 'number') {
                 vector = vector === 0 ? 1 : vector;
-                return new $.DMath.Vector.D3(this.x / vector, this.y / vector, this.z / vector);
+                return new $.DMath.Vector3D(this.x / vector, this.y / vector, this.z / vector);
             } else {
                 this;
             }
@@ -1257,7 +1597,7 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description check out if the values is equal to another
          * vector class
-         * @param {Vector.D3} [vector]
+         * @param {Vector3D} [vector]
          * @returns {Boolean}
          */
         equals(vector) {
@@ -1265,19 +1605,19 @@ if (typeof String.prototype.clean === 'undefined') {
         }
         /**
          * @description get the dot product based on another vector
-         * @param {Vector.D3} [vector]
+         * @param {Vector3D} [vector]
          * @returns {Number}
-         */ 
+         */
         dot(vector) {
             return this.x * vector.x + this.y * vector.y + this.z * vector.z;
         }
         /**
          * @description get the cross product based on another vector
-         * @param {Vector.D3} [vector]
-         * @returns {Vector.D3}
+         * @param {Vector3D} [vector]
+         * @returns {Vector3D}
          */
         cross(vector) {
-            return new $.DMath.Vector.D3(
+            return new $.DMath.Vector3D(
                 this.y * vector.z - this.z * vector.y,
                 this.z * vector.x - this.x * vector.z,
                 this.x * vector.y - this.y * vector.x
@@ -1293,7 +1633,7 @@ if (typeof String.prototype.clean === 'undefined') {
         /**
          * @description unit all values from this class into
          * one
-         * @returns {Vector.D3}
+         * @returns {Vector3D}
          */
         unit() {
             return (this.div(this.length()));
@@ -1332,21 +1672,29 @@ if (typeof String.prototype.clean === 'undefined') {
          */
         ato(vector) {
             return Math.acos(this.dot(vector) / (this.length() * vector.length()));
-        } 
+        }
         /**
          * @description clone this class
-         * @returns {Vector.D3}
+         * @returns {Vector3D}
          */
         clone() {
-            new $.DMath.Vector.D3(this.x, this.y, this.z);
+            new $.DMath.Vector3D(this.x, this.y, this.z);
         }
-    }
+
+        string() {
+            return `x: ${$.DMath.float(this.x)}, y: ${$.DMath.float(this.y)}, z: ${$.DMath.float(this.z)}`;
+        }
+
+        array() {
+            return [this.x, this.y, this.z]
+        }
+    }; $.DMath.Vector3D = Vector3D;
     /**
      * @description cross produtc between vector 3d class
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
-     * @param {Vector.D3} [c]
-     * @returns {Vector.D3}
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
+     * @param {Vector3D} [c]
+     * @returns {Vector3D}
      */
     $.DMath.Vector.cross3d = function (a, b, c) {
         c.x = a.y * b.z - a.z * b.y;
@@ -1356,9 +1704,9 @@ if (typeof String.prototype.clean === 'undefined') {
     }
     /**
      * @description unifique values
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
-     * @returns {Vector.D3}
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
+     * @returns {Vector3D}
      */
     $.DMath.Vector.unit3d = function (a, b) {
         let length = a.length();
@@ -1371,17 +1719,17 @@ if (typeof String.prototype.clean === 'undefined') {
      * @description create a vector based on angles
      * @param {Number} [theta]
      * @param {Number} [phi]
-     * @returns {Vector.D3}
+     * @returns {Vector3D}
      */
     $.DMath.Vector.fangle3d = function (theta, phi) {
-        return new $.DMath.Vector.D3(
-            Math.cos(theta) * Math.cos(phi), 
-            Math.sin(phi), 
+        return new $.DMath.Vector3D(
+            Math.cos(theta) * Math.cos(phi),
+            Math.sin(phi),
             Math.sin(theta) * Math.cos(phi));
     }
     /**
      * @description create a random vector based on angles
-     * @returns {Vector.D3}
+     * @returns {Vector3D}
      */
     $.DMath.Vector.rand3d = function () {
         return $.DMath.Vector.fangle3d(Math.random() * Math.PI * 2, Math.asin(Math.random() * 2 - 1));
@@ -1389,9 +1737,9 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description create a vector based on minimum value between two 
      * vectors
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
-     * @returns {Vector.D3}
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
+     * @returns {Vector3D}
      */
     $.DMath.Vector.min3d = function (a, b) {
         return new Vector(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
@@ -1399,28 +1747,28 @@ if (typeof String.prototype.clean === 'undefined') {
     /**
      * @description create a vector based on maximum value between two 
      * vectors
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
-     * @returns {Vector.D3}
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
+     * @returns {Vector3D}
      */
     $.DMath.Vector.max3d = function (a, b) {
         return new Vector(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
     }
     /**
      * @description Linearly interpolates between two vectors.
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
      * @param {Number} [fraction] nterpolates between from and to by amount 'fraction'.
-     * @returns {Vector.D3}
+     * @returns {Vector3D}
      */
     $.DMath.Vector.lerp = function (a, b, fraction) {
         return b.sub(a).mult(fraction).add(a);
     }
     /**
      * @description between angles of two vectors
-     * @param {Vector.D3} [a]
-     * @param {Vector.D3} [b]
-     * @returns {Vector.D3}
+     * @param {Vector3D} [a]
+     * @param {Vector3D} [b]
+     * @returns {Vector3D}
      */
     $.DMath.Vector.bangle = function (a, b) {
         return a.ato(b);
@@ -1433,7 +1781,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @type {Snippet}
      * @return {function}
      */
-    TouchInput._onMouseMove = function(event) {
+    TouchInput._onMouseMove = function (event) {
         var x = Graphics.pageToCanvasX(event.pageX);
         var y = Graphics.pageToCanvasY(event.pageY);
         this._onMove(x, y);
@@ -1447,7 +1795,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @param {string} name 
      * @return {boolean}
      */
-    SceneManager.prototype.isScene = function(name) { return SceneManager._scene && SceneManager._scene.constructor === name; }
+    SceneManager.prototype.isScene = function (name) { return SceneManager._scene && SceneManager._scene.constructor === name; }
     // ============================================================================= 
     /**
      * :piximanager
@@ -1455,7 +1803,7 @@ if (typeof String.prototype.clean === 'undefined') {
      * @memberof Haya.Pixi
      * @desc manager for some functios toward PIXI
      */
-    $.Pixi.Manager = function() { throw new Error('This is a static class'); } 
+    $.Pixi.Manager = function () { throw new Error('This is a static class'); }
     /**
      * @desc load texture using PIXI
      * @param {object} request that:
@@ -1463,7 +1811,7 @@ if (typeof String.prototype.clean === 'undefined') {
      *      value shall be the filepath to load the texture
      * @return {boolean}
      */
-    $.Pixi.Manager.load = function(request) {
+    $.Pixi.Manager.load = function (request) {
         // return
         if (!$.Utils.isObject(request)) return false;
         // loader
@@ -1476,7 +1824,7 @@ if (typeof String.prototype.clean === 'undefined') {
                     name: name,
                     url: pathname
                 });
-            } 
+            }
         }
         // load
         loader.load(function (ld, resource) {
@@ -1493,7 +1841,7 @@ if (typeof String.prototype.clean === 'undefined') {
      *  return to PIXI.Texture
      *  if don't exist, return to empty.
      */
-    $.Pixi.Manager.cache = function(id) {
+    $.Pixi.Manager.cache = function (id) {
         if ($.Pixi.TextureCache.hasOwnProperty(id)) {
             return $.Pixi.TextureCache[id];
         } else {
@@ -1501,14 +1849,36 @@ if (typeof String.prototype.clean === 'undefined') {
         }
     }
     // =============================================================================
+    /**
+    * @function $.Pixi.mirror
+    * @description invert sprite (x or y)
+    * @param {sprite} sprite PIXI.Sprite
+    * @param {boolean} type
+    *  [true] will invert by X axis
+    *  [false] will invert by Y axis
+    * @param {number} point to anchor set 
+    */
+    $.Pixi.mirror = (sprite, type, point) => {
+        point = point || 1;
+        type = type || 0;
+        if (type) {
+            sprite.anchor.x = point; /* 0 = top, 0.5 = center, 1 = bottom */
+            sprite.scale.x *= -1;
+        } else {
+            sprite.anchor.y = point; /* 0 = top, 0.5 = center, 1 = bottom */
+            sprite.scale.y *= -1;
+        }
+    }
+    // =============================================================================
+    $.Pixi.Sprite = {};
     /** 
      * :sprite
      * @class 
-     * @function Base
+     * @function PBase_Sprite
      * @memberof $.Pixi.Sprite
      * @classdesc Base class for 'Sprite' manager based on PIXI.
     */
-    $.Pixi.Sprite.Base = class extends PIXI.Container {
+    class PBase_Sprite {
         /**
          * @constructor
          * @param {stage} stage 
@@ -1516,9 +1886,11 @@ if (typeof String.prototype.clean === 'undefined') {
          * @param {function} callback
          *  [calls after the load]
         */
-        constructor(stage, callback) {
+        constructor(stage, callback, hash) {
             this.stage = stage || SceneManager._scene;
             this.callback = callback;
+            this._hitArea_Sprite = true;
+            this.hash = hash;
             this.setup();
             this.load();
             if ($.Utils.isFunction(this.callback)) this.callback.apply(this, arguments);
@@ -1533,11 +1905,11 @@ if (typeof String.prototype.clean === 'undefined') {
             this._update = null;
             this.mouse = {
                 x: 0, y: 0, active: false,
-                over: null, out: null, 
-                trigger: {on: null, off: null},
-                press: {on: null, off: null},
-                repeat: {on: null, off: null},
-                drag: {active: false, start: false, on: null}
+                over: null, out: null,
+                trigger: { on: null, off: null },
+                press: { on: null, off: null },
+                repeat: { on: null, off: null },
+                drag: { active: false, start: false, on: null }
             };
         }
         /**
@@ -1557,7 +1929,7 @@ if (typeof String.prototype.clean === 'undefined') {
          */
         dispose(destroy) {
             if (this._loaded) {
-                this.sprite.destroy(destroy);  
+                this.sprite.destroy(destroy);
             }
         }
         /**
@@ -1568,10 +1940,12 @@ if (typeof String.prototype.clean === 'undefined') {
             // return if is not loaded
             if (this._loaded === false) return;
             // update hit area
-            this.sprite.hitArea.x = this.sprite.x;
-            this.sprite.hitArea.y = this.sprite.y;
-            this.sprite.hitArea.width = this.sprite.width;
-            this.sprite.hitArea.height = this.sprite.height;
+            if (this._hitArea_Sprite === true) {
+                this.sprite.hitArea.x = this.sprite.x;
+                this.sprite.hitArea.y = this.sprite.y;
+                this.sprite.hitArea.width = this.sprite.width;
+                this.sprite.hitArea.height = this.sprite.height;
+            }
             // render
             this.sprite.updateTransform();
             Graphics.render(this.sprite);
@@ -1592,7 +1966,7 @@ if (typeof String.prototype.clean === 'undefined') {
          * @param {string, number} type
          */
         position(type) {
-            let _position = $.DMath.Position.screen({type: type, object: this.sprite});
+            let _position = $.DMath.Position.screen({ type: type, object: this.sprite });
             this.sprite.x = _position.x;
             this.sprite.y = _position.y;
         }
@@ -1606,7 +1980,7 @@ if (typeof String.prototype.clean === 'undefined') {
          */
         mirror(type, point) {
             point = point || 1;
-            type  = type  || 0;
+            type = type || 0;
             if (type) {
                 this.sprite.anchor.x = point; /* 0 = top, 0.5 = center, 1 = bottom */
                 this.sprite.scale.x *= -1;
@@ -1627,7 +2001,7 @@ if (typeof String.prototype.clean === 'undefined') {
                     return true;
                 }
             }
-            return false; 
+            return false;
         }
         /**
          * @function updateMouse
@@ -1645,12 +2019,13 @@ if (typeof String.prototype.clean === 'undefined') {
                     if (!this.mouse.drag.active) {
                         if ($.Utils.isFunction(this.mouse.press.on)) this.mouse.press.on.apply(this);
                     } else {
+
+                        this.sprite.x = this.mouse.x - (((this.sprite.hitArea.width)) / 2)
+                        this.sprite.y = this.mouse.y - (((this.sprite.hitArea.height)) / 2)
                         if ($.Utils.isFunction(this.mouse.drag.on)) this.mouse.drag.on.apply(this);
-                        this.sprite.x = this.mouse.x - ( ( (this.sprite.hitArea.width) ) / 2 )
-                        this.sprite.y = this.mouse.y - ( ( (this.sprite.hitArea.height) ) / 2 )
                     }
                 } else {
-                    if (this.mouse.drag.active)  this.mouse.drag.start = false;
+                    if (this.mouse.drag.active) this.mouse.drag.start = false;
                 }
                 // check out if was repeated inside
                 if (TouchInput.isRepeated() && $.Utils.isFunction(this.mouse.repeat.on)) this.mouse.repeat.on.apply(this);
@@ -1665,15 +2040,15 @@ if (typeof String.prototype.clean === 'undefined') {
                 if (TouchInput.isRepeated() && $.Utils.isFunction(this.mouse.repeat.off)) this.mouse.repeat.off.apply(this);
             }
         }
-    }
+    }; $.Pixi.Sprite.Base = PBase_Sprite;
     /**
      * :picture
      * @class
-     * @function Picture
+     * @function PBase_Picture
      * @memberof $.Pixi.Sprite
      * @classdesc class to manager picture pixi based on $.Pixi.Sprite.Base
      */
-    $.Pixi.Sprite.Picture = class extends $.Pixi.Sprite.Base {
+    class PBase_Picture extends PBase_Sprite {
         /**
          * @constructor
          * @param {object} hash
@@ -1683,8 +2058,7 @@ if (typeof String.prototype.clean === 'undefined') {
          *  [calls after the load]
          */
         constructor(hash, callback) {
-            this.hash = hash;
-            super.constructor.call(this, this.hash.stage, callback);
+            super(hash.stage, callback, hash);
         }
         /**
          * @function load
@@ -1697,94 +2071,161 @@ if (typeof String.prototype.clean === 'undefined') {
             // after load
             super.load.call(this);
         }
+    }; $.Pixi.Sprite.Picture = PBase_Picture;
+    // =============================================================================
+    /**
+     * @function Mouse.position
+     * @description get the position
+     */
+    $.Mouse.position = new Point(0, 0);
+    /**
+     * @function Mouse.x 
+     * @description get the updated X axis position
+     */
+    Object.defineProperty($.Mouse, 'x', {
+        get: () => {
+            $.Mouse.position.x = Graphics.pageToCanvasX(TouchInput.x);
+            return $.Mouse.position.x;
+        },
+
+        set: (value) => {
+            $.Mouse.position.x = Graphics.pageToCanvasX(value || TouchInput.x);
+            return $.Mouse.position.x;
+        },
+
+        configurable: true
+    });
+    /**
+     * @function Mouse.y
+     * @description get the updated Y axis position
+     */
+    Object.defineProperty($.Mouse, 'y', {
+        get: () => {
+            $.Mouse.position.y = Graphics.pageToCanvasX(TouchInput.y);
+            return $.Mouse.position.y;
+        },
+
+        set: (value) => {
+            $.Mouse.position.y = Graphics.pageToCanvasX(value || TouchInput.y);
+            return $.Mouse.position.y;
+        },
+
+        configurable: true
+    });
+    /**
+     * @function Mouse.area
+     * @description check out if the mouse is on this area
+     * @param {Object:Sprite:Rectangle} [object={object.x, object.y, object.width, object.height}]
+     * @returns Boolean
+     */
+    $.Mouse.area = function (object, callback) {
+        let area = ($.Mouse.x.isBetween(object.x, (object.x + object.width)) &&
+            $.Mouse.y.isBetween(object.y, (object.y + object.height)));
+        return $.Utils.isFunction(callback) ? callback.call(this, area) : area;
     }
     /**
-     * :text
-     * @class
-     * @function Text
-     * @memberof $.Pixi.Sprite
-     * @classdesc class to manager text pixi based on $.Pixi.Sprite.Base
+     * @function Mouse.isTriggered 
+     * @description Check out if the mouse is at area and if it was triggered
+     * @param {Object:Sprite:Rectangle} [object={object.x, object.y, object.width, object.height}]
+     * @param {Function:(value)} [callback=(area, value)] callback function, area that if is on area or
+     * not; value if it was triggered or not
+     * @example 
+     * $.Mouse.isTriggered(sprite, (onArea, triggered) => {
+     *      if (area && triggered) return 'triggered at area';
+     *      if (!area && triggered) return 'triggered off area'
+     * })
      */
-    $.Pixi.Sprite.Text = class extends $.Pixi.Sprite.Base {
-        /**
-         * @constructor
-         * @param {object} hash
-         *  {stage} stage: stage that will get this children
-         *  {string} text: initial text to display
-         *  {object} style: style of text
-         * @param {function} callback
-         *  [calls after the load]
-         */
-        constructor(hash, callback) {
-            this.hash = hash;
-            this._text = "";
-            super.constructor.call(this, this.hash.stage, callback);
-        }
-        /**
-         * @function load
-         * @description load the texture
-         */
-        load() {
-            this.sprite = new PIXI.Text(this.hash.text || "");
-            if ($.Utils.isObject(this.hash.style)) this.sprite.style = this.hash.style;
-            // after load
-            super.load.call(this);
-        }
+    $.Mouse.isTriggered = function (object, callback) {
+        return $.Utils.isFunction(callback) ? callback.call(this, $.Mouse.area(object), TouchInput.isTriggered()) : false;
     }
     /**
-     * :rect
-     * @class 
-     * @function Graphic
-     * @memberof $.Pixi.Sprite
-     * @classdesc class to manager Graphic pixi based on $.Pixi.Sprite.Base
-     */
-    $.Pixi.Sprite.Graphic = class extends $.Pixi.Sprite.Base {
-        /**
-         * @constructor
-         * @param {object} hash
-         *  {stage} stage: stage that will get this children
-         *  {string} type: type of graphic. 'circle', 'rect'
-         *  {color} bfill: beginFill
-         *  {number} x: axis position graphic X
-         *  {number} y: axis position graphic Y
-         *  {number} width: size of width
-         *  {number} height: size of height
-         *  {number} alpha: alpha of graphic, default is 1
-         *  {number} radius: radius to circle
-         * @param {function} callback
-         *  [calls after the load]
-         */
-        constructor(hash, callback) {
-            this.hash = hash;
-            this.hash.type = this.hash.type || "rect";
-            super.constructor.call(this, this.hash.stage, callback);
-        }
-        /**
-         * @function load
-         * @description load the texture
-         */
-        load() {
-            // rect
-            if (this.hash.type === "rect") {
-                this.sprite = new PIXI.Graphics();
-                this.sprite.beginFill(this.hash.bfill || 0xDDDDDD, this.hash.alpha || 1);
-                this.sprite.drawRect(
-                    this.hash.x || 0, this.hash.y || 0,
-                    this.hash.width || 96, this.hash.height || 24
-                )
-            } else if (this.hash.type === "circle") {
-                this.sprite = new PIXI.Graphics();
-                this.sprite.beginFill(this.hash.bfill || 0xDDDDDD, this.hash.alpha || 1);
-                this.sprite.drawCircle(
-                    this.hash.x || 0, this.hash.y || 0,
-                    this.hash.radius || 6
-                )
-            }
-            // after load
-            super.load.call(this);
-        }
+     * @function Mouse.isLongPressed 
+     * @description Check out if the mouse is at area and if it was long pressed
+     * @param {Object:Sprite:Rectangle} [object={object.x, object.y, object.width, object.height}]
+     * @param {Function:(value)} [callback=(area, value)] callback function, area that if is on area or
+     * not; value if it was triggered or not
+     * @example 
+     * $.Mouse.isLongPressed(sprite, (onArea, triggered) => {
+    *      if (area && triggered) return 'is long pressed at area';
+    *      if (!area && triggered) return 'is long pressed off area'
+    * })
+    */
+    $.Mouse.isLongPressed = function (object, callback) {
+        return $.Utils.isFunction(callback) ? callback.call(this, $.Mouse.area(object), TouchInput.isLongPressed()) : false;
     }
     // =============================================================================
-
+    $.Plugin = function () { throw new Error('this is a static class') };
+    $.Plugin._register = {};
+    /**
+     * @function Haya.Plugin.register
+     * @description register the plugin
+     * @param {object} [data] setup
+     *  {string} [author:]
+     *  {number} [version:]
+     *  {string} [name:] plugin name
+     * @returns {Boolean}
+     */
+    $.Plugin.register = (data) => {
+        if (!($.Plugin.registred(data.author, data.name, data.version))) {
+            $.Plugin._register[data.name] = {};
+            $.Plugin._register[data.name].author = data.author;
+            $.Plugin._register[data.name].version = data.version;
+        } else {
+            console.warn("This plugin is already registred!");
+        }
+    }
+    /**
+     * @function Haya.Plugin.registered
+     * @description check out if already have the plugin registred
+     * @param {string} [author]
+     * @param {string} [name] plugin name
+     * @param {number} [version]
+     * @returns {boolean}
+     */
+    $.Plugin.registred = (author, name, version) => {
+        if ($.Plugin._register.hasOwnProperty(name)) {
+            if ($.Plugin._register.author == author) {
+                if (!(Haya.Utils.invalid(version))) {
+                    return ($.Plugin._register.version >= version);
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    /**
+     * @function Haya.Plugin.import  
+     * @description load a file code and run. This create 
+     * a document 'script' and then run.
+     * @param {string} [pathname]
+     * @param {string|array:string} [filename]
+     */
+    $.Plugin.load = (pathname, filename) => {
+        // script
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = false;
+        // string
+        if (typeof filename === 'string') {
+            script.src = pathname + filename;
+            script._url = pathname + filename;
+            print("Loaded:", filename, pathname);
+        } else if (Haya.Utils.isArray(filename)) {
+            filename.forEach((value) => {
+                if (typeof value === 'string') {
+                    $.Plugin.load(pathname, value);
+                }
+            })
+        }
+        document.body.appendChild(script);
+    }
+    // =============================================================================
+    Window_Selectable.prototype.current = function () {
+        return this._data[this._index];
+    }
 })(Haya);
 Imported["Haya"] = true;
